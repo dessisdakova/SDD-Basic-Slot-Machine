@@ -2,31 +2,31 @@
 
 This roadmap outlines the evolution of the Slot Machine project, focusing on Specs-Driven Development (SDD) and AI-assisted engineering. Each phase represents a distinct milestone in feature set or technical maturity.
 
-## Part I: Game Mechanics & Features
+## Part I: Interface & Core Mechanics
 
-*   **Phase 1: Complex Winning Lines**  
+*   **Phase 1: Graphical User Interface (GUI)**  
+    Transition the interface from console-based to a visual framework (e.g., Pygame or a web-based UI).
+*   **Phase 2: Complex Winning Lines**  
     Define and implement non-horizontal winning patterns (diagonals, V-shapes, etc.) with precise coordinate specifications.
-*   **Phase 2: Wild Symbols**  
+*   **Phase 3: Wild Symbols**  
     Introduce symbols that can substitute for others to complete winning combinations.
-*   **Phase 3: Scatter Symbols**  
+*   **Phase 4: Scatter Symbols**  
     Implement mechanics where symbols trigger payouts or events regardless of their position on paylines.
-*   **Phase 4: Bonus Symbols & Mini-Games**  
+*   **Phase 5: Bonus Symbols & Mini-Games**  
     Add special symbols that transition the game state into unique bonus rounds or mini-games.
-*   **Phase 5: Free Spins Feature**  
+*   **Phase 6: Free Spins Feature**  
     Develop the logic for awarding and executing free spins, including specialized multipliers.
-*   **Phase 6: Progressive Jackpots**  
+*   **Phase 7: Progressive Jackpots**  
     Implement a shared pool mechanism that accumulates value and defines specific hit conditions.
-*   **Phase 7: Nudge and Hold Features**  
+*   **Phase 8: Nudge and Hold Features**  
     Add player-initiated reel adjustments to increase interaction and strategic depth.
 
 ## Part II: Persistence & User Experience
 
-*   **Phase 8: User Profiles & Persistence**  
+*   **Phase 9: User Profiles & Persistence**  
     Implement data storage for player balances, authentication, and session history.
-*   **Phase 9: Global Leaderboards**  
+*   **Phase 10: Global Leaderboards**  
     Create a system to track and display top-performing players across sessions.
-*   **Phase 10: Graphical User Interface (GUI)**  
-    Transition the interface from console-based to a visual framework (e.g., Pygame or a web-based UI).
 *   **Phase 11: Sound Effects & Animations**  
     Specify and integrate audio-visual feedback for spins, wins, and bonus triggers.
 *   **Phase 12: External Configuration & Balancing**  
