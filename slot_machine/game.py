@@ -3,28 +3,36 @@ from slot_machine.core import generate_random_reels_in_spin, convert_reels_to_ro
 from slot_machine.utils import compare_total_bet_and_balance, print_spin, print_winnings, get_deposit
 
 
-def spin(balance) -> int:
-    """Performs a single spin of the slot machine.
-
-    This function manages the process of a single spin, including:
-        1.  Getting the bet and number of lines from the player.
-        2.  Generating the random spin.
-        3.  Converting the reels to rows.
-        4.  Printing the spin result.
-        5.  Checking for winning combinations and calculating winnings.
-        6.  Printing the winnings.
-        7.  Returning the net change in the player's balance.
-
-    :param balance: The current balance of the player.
-    :return: The net change in the player's balance (winnings - total bet).
+def execute_spin(balance: int, lines: int, bet: int) -> dict:
+    """Logic-only execution of a spin, returning results as a dictionary.
+    
+    This allows the same logic to be used by both CLI and Web API.
     """
-    bet, lines, total_bet = compare_total_bet_and_balance(balance)
-    spin_be_reels = generate_random_reels_in_spin(ROWS, REELS)
-    transposed_spin = convert_reels_to_rows(spin_be_reels)
-    print_spin(transposed_spin)
+    total_bet = lines * bet
+    if total_bet > balance:
+        raise ValueError("Insufficient balance for this bet.")
+
+    spin_reels = generate_random_reels_in_spin(ROWS, REELS)
+    transposed_spin = convert_reels_to_rows(spin_reels)
     winnings, winning_lines = check_winning_combinations(transposed_spin, lines, bet)
-    print_winnings(winnings, winning_lines)
-    return winnings - total_bet
+
+    return {
+        "spin_result": transposed_spin,
+        "winnings": winnings,
+        "winning_lines": winning_lines,
+        "total_bet": total_bet,
+        "new_balance": balance - total_bet + winnings
+    }
+
+def spin(balance: int) -> int:
+    """CLI wrapper for performing a spin, handling input and output."""
+    bet, lines, total_bet = compare_total_bet_and_balance(balance)
+    result = execute_spin(balance, lines, bet)
+
+    print_spin(result["spin_result"])
+    print_winnings(result["winnings"], result["winning_lines"])
+
+    return result["winnings"] - result["total_bet"]
 
 def main():
     """Runs the main game loop of the slot machine.
