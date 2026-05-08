@@ -4,12 +4,30 @@ This project is a slot machine game created as a learning exercise, heavily insp
 
 ### Tech Stack
 
-Language: *Python*
+*   **Language:** Python
+*   **IDE:** Visual Studio Code (VSCode) with Gemini plugin
+*   **Web Framework:** FastAPI & Uvicorn
+*   **Testing Framework:** PyTest
 
-IDE: *PyCharm Community Edition 2021*
+### Installation
 
-Testing Framework: *PyTest*
+1. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### How to Run
+
+**Web API (FastAPI):**
+```bash
+uvicorn main:app --reload
+```
+Once running, access the interactive Swagger documentation at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+**CLI Version:**
+```bash
+python -m slot_machine.game
+```
 
 
 	
-

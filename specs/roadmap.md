@@ -4,8 +4,8 @@ This roadmap outlines the evolution of the Slot Machine project, focusing on Spe
 
 ## Part I: Interface & Core Mechanics
 
-*   **Phase 1: Graphical User Interface (GUI)**  
-    Transition the interface from console-based to a visual framework (e.g., Pygame or a web-based UI).
+*   **Phase 1: Web-Based Interface (API & Frontend)**  
+    Transition the interface from console-based to a web application using a Python backend (FastAPI/Flask) and a modern frontend.
 *   **Phase 2: Complex Winning Lines**  
     Define and implement non-horizontal winning patterns (diagonals, V-shapes, etc.) with precise coordinate specifications.
 *   **Phase 3: Wild Symbols**  

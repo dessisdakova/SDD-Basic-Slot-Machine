@@ -13,3 +13,6 @@ For future development and enhancements, the project will be further developed u
 *   **IDE:** Visual Studio Code (VSCode)
 *   **AI Assistant:** Gemini plugin
 *   **Development Methodology:** SDD
+*   **Web Framework:** FastAPI (Backend)
+*   **Frontend:** HTML5, CSS3, JavaScript
+*   **E2E Testing:** Playwright (for future phases)
