@@ -1,15 +1,25 @@
-# Slot Machine Game / Unit Testing
+# Specs-Driven Slot Machine
 
-This project is a slot machine game created as a learning exercise, heavily inspired by a [YouTube tutorial](https://www.youtube.com/watch?v=th4OBktqK1I) by Tim Ruscica ([Tech With Tim](https://www.youtube.com/c/TechWithTim)). While the core logic and concept are based on his video, I've made modifications and enhancements to the code, including restructuring it into a package, adding extensive unit tests, and improving overall code quality.
+This project is a sophisticated slot machine game built to demonstrate **Specs-Driven Development (SDD)** and **AI-assisted engineering**.
+
+### Origins & Evolution
+The core logic was initially inspired by a [YouTube tutorial](https://www.youtube.com/watch?v=th4OBktqK1I) by Tim Ruscica ([Tech With Tim](https://www.youtube.com/c/TechWithTim)). Since the original implementation, this project has been significantly evolved and improved using **VS Code** and the **Gemini Code Assist** plugin to transition from a CLI script to a production-grade modular web application.
+
+### Key Features
+- **Specs-Driven Methodology:** Every feature is defined in the `specs/` directory before implementation.
+- **5-Reel Mechanics:** Expanded from a 3x3 to a 5x3 grid with tiered payouts for 3, 4, and 5 matching symbols.
+- **10 Complex Paylines:** Includes horizontal, V-shapes, zig-zags, and staircase patterns.
+- **Wild Symbols:** Integrated "🌟" symbols that substitute for any standard symbol.
+- **Web Interface:** A responsive SPA built with FastAPI, Tailwind CSS, and Vanilla JavaScript.
+- **Interactive Info Modal:** Dynamic UI for rules and pay tables, synced with backend constants.
+- **Layered Testing:** Comprehensive test suite including Unit tests, API Integration tests (API Object Model), and Playwright E2E tests (Page Object Model).
 
 ### Tech Stack
-
 *   **Language:** Python
-*   **IDE:** Visual Studio Code (VSCode) with Gemini plugin
+*   **AI Assistant:** VS Code with Gemini Code Assist
 *   **Web Framework:** FastAPI & Uvicorn
 *   **Frontend:** HTML5, CSS3 (Tailwind CSS), JavaScript (Vanilla)
-*   **Testing Framework:** PyTest
-*   **E2E Testing:** Playwright
+*   **Testing:** PyTest (Unit/API) & Playwright (E2E)
 
 ### Installation
 
@@ -17,11 +27,14 @@ This project is a slot machine game created as a learning exercise, heavily insp
    ```bash
    pip install -r requirements.txt
    ```
-   (Note: Playwright requires additional setup. Refer to Playwright documentation for browser installation.)
+2. **Install Playwright Browsers:**
+   ```bash
+   playwright install
+   ```
 
 ### How to Run
 
-**Web API (FastAPI):**
+**Web Application:**
 ```bash
 uvicorn main:app --reload
 ```
