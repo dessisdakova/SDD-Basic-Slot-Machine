@@ -7,7 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style type="text/tailwindcss">
         .slot-cell { @apply w-20 h-20 flex items-center justify-center text-4xl bg-white border-2 border-gray-300 rounded-lg shadow-inner; }
-        .winning-cell { @apply border-yellow-400 bg-yellow-50 animate-pulse; }
+        .winning-cell { @apply border-purple-400 bg-purple-50 animate-pulse; }
+        .dimmed-cell { @apply opacity-40 grayscale; }
+        .line-indicator { @apply w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 border border-gray-300 transition-colors duration-300; }
+        .line-indicator.active { @apply bg-purple-400 text-white border-purple-500 shadow-sm; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
@@ -16,7 +19,8 @@
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center">
             <h2 class="text-2xl font-bold mb-4">Welcome to the Slots!</h2>
             <p class="text-gray-600 mb-6">How much would you like to deposit?</p>
-            <input type="number" id="deposit-input" value="100" min="1" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 mb-4 text-center text-xl">
+            <input type="number" id="deposit-input" value="100" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 mb-1 text-center text-xl">
+            <p id="deposit-error" class="text-red-500 text-xs mb-4 hidden">Deposit must be between $50 and $5000.</p>
             <button id="deposit-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-lg">
                 Deposit & Play
             </button>
@@ -34,7 +38,7 @@
             </button>
         </div>
     </div>
-    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-2xl">
         <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Slot Machine</h1>
         
         <div class="flex justify-between items-center mb-6 bg-gray-50 p-4 rounded-lg">
@@ -43,22 +47,25 @@
         </div>
 
         <!-- Slot Grid -->
-        <div id="slot-grid" class="grid grid-cols-3 gap-2 mb-8 justify-center">
-            <!-- Symbols will be injected here -->
-            <div class="slot-cell">?</div><div class="slot-cell">?</div><div class="slot-cell">?</div>
-            <div class="slot-cell">?</div><div class="slot-cell">?</div><div class="slot-cell">?</div>
-            <div class="slot-cell">?</div><div class="slot-cell">?</div><div class="slot-cell">?</div>
+        <div class="flex items-center justify-center gap-4 mb-8">
+            <div id="left-indicators" class="flex flex-col gap-2 h-full justify-around"></div>
+            <div id="slot-grid" class="grid grid-cols-5 gap-2">
+                <!-- Symbols will be injected here -->
+            </div>
+            <div id="right-indicators" class="flex flex-col gap-2 h-full justify-around"></div>
         </div>
 
         <!-- Controls -->
         <div class="space-y-4">
             <div class="flex flex-col">
-                <label class="text-sm font-medium text-gray-700">Lines to Bet (1-<span id="max-lines-label">5</span>)</label>
-                <input type="number" id="lines-input" value="3" min="1" max="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2">
+                <label class="text-sm font-medium text-gray-700">Lines to Bet (1-<span id="max-lines-label">10</span>)</label>
+                <input type="number" id="lines-input" value="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 transition-colors">
+                <p id="lines-error" class="text-red-500 text-xs mt-1 hidden">Please select 1 to 10 lines.</p>
             </div>
             <div class="flex flex-col">
-                <label class="text-sm font-medium text-gray-700">Bet per Line</label>
-                <input type="number" id="bet-input" value="10" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2">
+                <label class="text-sm font-medium text-gray-700">Bet per Line ($1 - $<span id="max-bet-label">10</span>)</label>
+                <input type="number" id="bet-input" value="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 transition-colors">
+                <p id="bet-error" class="text-red-500 text-xs mt-1 hidden">Bet must be between $1 and $10.</p>
             </div>
             
             <div class="flex gap-2">

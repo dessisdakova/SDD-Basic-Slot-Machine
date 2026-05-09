@@ -58,7 +58,7 @@ def convert_reels_to_rows(reels: list) -> list[list[str]]:
 
     return rows
 
-def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> tuple[int, list[int]]:
+def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> tuple[int, dict[int, int]]:
     """Check for winning combinations in the transposed spin and calculates winnings.
 
     :param transposed_spin: A list of lists representing the rows of the slot machine.
@@ -66,19 +66,25 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
     :param bet: The amount the player has bet on each line.
     :return: A tuple containing:
             - The total winnings (int).
-            - A list of the winning line numbers (list[int]).
+            - A dictionary of winning lines {line_number: match_count}.
     """
     total_winnings = 0
-    winning_lines = []
+    winning_lines = {}
 
-    for line in range(1, lines + 1):
-        positions = WINNING_LINES[line]
+    for line_num in range(1, lines + 1):
+        positions = WINNING_LINES[line_num]
         first_symbol = transposed_spin[positions[0][0]][positions[0][1]]
-        for (row, reel) in positions:
-            if transposed_spin[row][reel] != first_symbol:
+        
+        consecutive_matches = 0
+        for (row, col) in positions:
+            if transposed_spin[row][col] == first_symbol:
+                consecutive_matches += 1
+            else:
                 break
-        else:
-            total_winnings += SYMBOLS_AND_MULTIPLIERS[first_symbol] * bet
-            winning_lines.append(line)
+
+        if consecutive_matches >= 3:
+            multiplier = SYMBOLS_AND_MULTIPLIERS[first_symbol].get(consecutive_matches, 0)
+            total_winnings += multiplier * bet
+            winning_lines[line_num] = consecutive_matches
 
     return total_winnings, winning_lines

@@ -1,13 +1,45 @@
 let currentBalance = 0;
 let winningLinesMap = {};
 let reelsCount = 3; // Fallback value
+let maxLines = 10;
+let maxBet = 10;
 
 async function initGame() {
     try {
         const response = await fetch('/game/configuration');
         const config = await response.json();
-        document.getElementById('max-lines-label').textContent = config.max_lines;
-        document.getElementById('lines-input').max = config.max_lines;
+        maxLines = config.max_lines;
+        maxBet = config.max_bet;
+        document.getElementById('max-lines-label').textContent = maxLines;
+        document.getElementById('max-bet-label').textContent = maxBet;
+        
+        // Generate line indicators
+        const left = document.getElementById('left-indicators');
+        const right = document.getElementById('right-indicators');
+        left.innerHTML = '';
+        right.innerHTML = '';
+        
+        for (let i = 1; i <= config.max_lines; i++) {
+            const indicator = document.createElement('div');
+            indicator.className = 'line-indicator';
+            indicator.id = `line-ind-${i}`;
+            indicator.textContent = i;
+            if (i <= 5) left.appendChild(indicator);
+            else right.appendChild(indicator);
+        }
+
+        // Populate initial random symbols
+        const grid = document.getElementById('slot-grid');
+        grid.innerHTML = '';
+        const totalCells = config.rows * config.reels;
+        for (let i = 0; i < totalCells; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'slot-cell';
+            const randomSymbol = config.symbols[Math.floor(Math.random() * config.symbols.length)];
+            cell.textContent = randomSymbol;
+            grid.appendChild(cell);
+        }
+
         // Store winning line coordinates for highlighting
         winningLinesMap = config.winning_lines_config;
         // Initially hide the game UI until a deposit is made
@@ -21,10 +53,14 @@ function updateUI(data) {
     const grid = document.getElementById('slot-grid');
     const balanceDisplay = document.getElementById('balance-display');
     const messageArea = document.getElementById('message-area');
+    const indicators = document.querySelectorAll('.line-indicator');
 
     // Update Balance
     currentBalance = data.new_balance;
     balanceDisplay.textContent = `$${currentBalance}`;
+
+    // Reset indicators
+    indicators.forEach(ind => ind.classList.remove('active'));
 
     // Update Grid
     grid.innerHTML = '';
@@ -39,14 +75,29 @@ function updateUI(data) {
         });
     });
 
-    // Highlight winning lines
-    data.winning_lines.forEach(lineNum => {
-        const coordinates = winningLinesMap[lineNum];
-        coordinates.forEach(([row, col]) => {
-            const index = row * reelsCount + col;
-            grid.children[index].classList.add('winning-cell');
+    const winningLineNumbers = Object.keys(data.winning_lines);
+    
+    if (winningLineNumbers.length > 0) {
+        // If there are wins, dim everything first
+        Array.from(grid.children).forEach(cell => cell.classList.add('dimmed-cell'));
+
+        // Highlight winning symbols and indicators
+        Object.entries(data.winning_lines).forEach(([lineNum, count]) => {
+            // Highlight indicator
+            const indicator = document.getElementById(`line-ind-${lineNum}`);
+            if (indicator) indicator.classList.add('active');
+
+            // Highlight specific symbols in the line
+            const coordinates = winningLinesMap[lineNum];
+            coordinates.forEach(([row, col], index) => {
+                const gridIndex = row * reelsCount + col;
+                if (index < count) {
+                    grid.children[gridIndex].classList.remove('dimmed-cell');
+                    grid.children[gridIndex].classList.add('winning-cell');
+                }
+            });
         });
-    });
+    }
 
     // Show Result Message
     if (data.winnings > 0) {
@@ -119,4 +170,45 @@ document.getElementById('spin-button').addEventListener('click', handleSpin);
 document.getElementById('deposit-button').addEventListener('click', handleDeposit);
 document.getElementById('cashout-button').addEventListener('click', handleCashout); // Keep this for the button in the main UI
 document.getElementById('play-again-button').addEventListener('click', handlePlayAgain);
+
+// Validation Listeners
+document.getElementById('deposit-input').addEventListener('input', (e) => {
+    const val = parseInt(e.target.value);
+    const btn = document.getElementById('deposit-button');
+    const err = document.getElementById('deposit-error');
+    const isValid = val >= 50 && val <= 5000;
+    
+    btn.disabled = !isValid;
+    btn.style.opacity = isValid ? "1" : "0.5";
+    err.classList.toggle('hidden', isValid);
+});
+
+const validateInGameInput = () => {
+    const linesInput = document.getElementById('lines-input');
+    const betInput = document.getElementById('bet-input');
+    const spinBtn = document.getElementById('spin-button');
+    
+    const linesVal = parseInt(linesInput.value);
+    const betVal = parseInt(betInput.value);
+    
+    const linesValid = linesVal >= 1 && linesVal <= maxLines;
+    const betValid = betVal >= 1 && betVal <= maxBet;
+    
+    // Lines UI
+    linesInput.classList.toggle('border-red-500', !linesValid);
+    document.getElementById('lines-error').classList.toggle('hidden', linesValid);
+    
+    // Bet UI
+    betInput.classList.toggle('border-red-500', !betValid);
+    document.getElementById('bet-error').classList.toggle('hidden', betValid);
+    
+    // Spin Button state
+    const allValid = linesValid && betValid;
+    spinBtn.disabled = !allValid;
+    spinBtn.style.opacity = allValid ? "1" : "0.5";
+};
+
+document.getElementById('lines-input').addEventListener('input', validateInGameInput);
+document.getElementById('bet-input').addEventListener('input', validateInGameInput);
+
 initGame();
