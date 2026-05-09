@@ -25,12 +25,14 @@ def test_convert_reels_to_rows_correctly_transforms_spin():
     mock_reels = [
         ["♦", "♦", "♦"],
         ["♥", "♥", "♥"],
-        ["♣", "♣", "♣"]
+        ["♣", "♣", "♣"],
+        ["♠", "♠", "♠"],
+        ["🌟", "🌟", "🌟"]
     ]
     expected = [
-        ["♦", "♥", "♣"],
-        ["♦", "♥", "♣"],
-        ["♦", "♥", "♣"]
+        ["♦", "♥", "♣", "♠", "🌟"],
+        ["♦", "♥", "♣", "♠", "🌟"],
+        ["♦", "♥", "♣", "♠", "🌟"]
     ]
 
     result = convert_reels_to_rows(mock_reels)
@@ -40,29 +42,32 @@ def test_convert_reels_to_rows_correctly_transforms_spin():
 
 def test_check_winning_combinations_1st_to_3rd_lines():
     mock_spin = [
-        ["♦", "♦", "♦"],
-        ["♥", "♥", "♥"],
-        ["♠", "♠", "♠"]
+        ["♦", "♦", "♦", "♦", "♦"],
+        ["♥", "♥", "♥", "♥", "♥"],
+        ["♠", "♠", "♠", "♠", "♠"]
     ]
     bet = 10
     lines = 5
 
     winnings, winning_lines = check_winning_combinations(mock_spin, lines, bet)
 
-    assert winnings == 450
-    assert winning_lines == [1, 2, 3]
+    # ♦(5x)=15, ♥(5x)=30, ♠(5x)=50 -> (15+30+50)*10 = 950
+    assert winnings == 950
+    assert winning_lines == {1: 5, 2: 5, 3: 5}
 
 
 def test_check_winning_combinations_4rd_5th_lines():
+    # Line 4 (V) and 5 (Inv V) passing through center symbols
     mock_spin = [
-        ["♣", "♥", "♣"],
-        ["♥", "♣", "♥"],
-        ["♣", "♠", "♣"]
+        ["♣", "♥", "♥", "♥", "♣"],
+        ["♥", "♣", "♥", "♣", "♥"],
+        ["♣", "♥", "♣", "♥", "♣"]
     ]
     bet = 10
     lines = 5
 
     winnings, winning_lines = check_winning_combinations(mock_spin, lines, bet)
 
-    assert winnings == 100
-    assert winning_lines == [4, 5]
+    # ♣(5x)=8. Two lines win: 8*10 + 8*10 = 160
+    assert winnings == 160
+    assert winning_lines == {4: 5, 5: 5}

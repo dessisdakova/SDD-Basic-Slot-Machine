@@ -108,7 +108,7 @@ def test_compare_total_bet_and_balance_shows_message_when_balance_is_not_enough(
 
 def test_print_winnings_prints_as_expected(capsys):
     winnings = 150
-    winning_lines = [1, 2, 3]
+    winning_lines = {1: 3, 2: 3, 3: 3}
     expected_output = f"You won ${winnings}.\nYou won on lines:  {' '.join(map(str, winning_lines))}\n"
 
     print_winnings(winnings, winning_lines)

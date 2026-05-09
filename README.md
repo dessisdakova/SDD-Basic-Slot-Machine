@@ -23,13 +23,18 @@ The core logic was initially inspired by a [YouTube tutorial](https://www.youtub
 
 ### Installation
 
-1. **Install dependencies:**
+1. **Create and activate a virtual environment:**
    ```bash
-   pip install -r requirements.txt
+   python -m venv .venv
+   .venv\Scripts\activate
    ```
-2. **Install Playwright Browsers:**
+2. **Install dependencies:**
    ```bash
-   playwright install
+   pip install -r requirements.txt # This will now install 'playwright' as well
+   ```
+3. **Install Playwright Browsers:**
+   ```bash
+   python -m playwright install
    ```
 
 ### How to Run
@@ -45,6 +50,17 @@ Once running, access the Web UI at: http://127.0.0.1:8000/
 ```bash
 python -m slot_machine.game
 ```
+
+### Running Tests
+
+To verify the application's functionality across the stack, you can run the following test commands:
+
+**End-to-End (E2E) UI Tests:**
+To run the UI tests while visually observing the browser interactions, use the headed mode:
+```bash
+python -m pytest --headed tests/test_ui_e2e.py
+```
+*Note: Ensure the FastAPI server is running in a separate terminal before executing E2E tests.*
 
 
 	

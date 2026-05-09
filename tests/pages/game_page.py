@@ -12,9 +12,16 @@ class SlotMachinePage:
         self.spin_button = page.locator("#spin-button")
         self.message_area = page.locator("#message-area")
         self.slot_cells = page.locator(".slot-cell")
+        self.deposit_input = page.locator("#deposit-input")
+        self.deposit_button = page.locator("#deposit-button")
 
     def navigate(self):
         self.page.goto(self.url)
+
+    def deposit_money(self, amount: int):
+        """Fills the deposit input and clicks the deposit button."""
+        self.deposit_input.fill(str(amount))
+        self.deposit_button.click()
 
     def play_round(self, lines: int, bet: int):
         """Sets inputs and clicks spin."""

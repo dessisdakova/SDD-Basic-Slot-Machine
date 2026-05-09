@@ -2,8 +2,11 @@ exceptiongroup==1.2.2
 iniconfig==2.0.0
 packaging==24.2
 pluggy==1.5.0
+playwright
 pytest==8.3.5
 pytest-mock==3.14.0
 tomli==2.2.1
 fastapi
 uvicorn
+httpx
+pytest-playwright

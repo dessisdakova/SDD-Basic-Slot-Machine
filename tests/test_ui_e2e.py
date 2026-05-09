@@ -7,6 +7,9 @@ def test_ui_spin_updates_balance(page: Page):
     game_page = SlotMachinePage(page)
     game_page.navigate()
     
+    # Handle the initial deposit modal
+    game_page.deposit_money(100)
+    
     initial_balance = game_page.get_balance()
     
     # Perform a spin: 1 line * 10 bet = 10 cost
@@ -21,7 +24,10 @@ def test_insufficient_funds_error_message(page: Page):
     game_page = SlotMachinePage(page)
     game_page.navigate()
     
-    # Try to bet more than the $100 starting balance
-    game_page.play_round(lines=5, bet=100)
+    # Handle the initial deposit modal
+    game_page.deposit_money(50)
+    
+    # Try to bet more than the $50 starting balance (10 lines * $10 = $100)
+    game_page.play_round(lines=10, bet=10)
     
     expect(game_page.message_area).to_contain_text("Insufficient balance")
