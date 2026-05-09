@@ -11,9 +11,46 @@
         .dimmed-cell { @apply opacity-40 grayscale; }
         .line-indicator { @apply w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 border border-gray-300 transition-colors duration-300; }
         .line-indicator.active { @apply bg-purple-400 text-white border-purple-500 shadow-sm; }
+        .modal-overlay { @apply fixed inset-0 bg-black bg-opacity-50 z-50; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
+    <!-- Info Modal -->
+    <div id="info-modal" class="modal-overlay hidden flex items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-xl max-h-[80vh] overflow-y-auto relative">
+            <button id="close-info" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Game Rules & Payouts</h2>
+            
+            <div class="space-y-6">
+                <section>
+                    <h3 class="text-lg font-semibold text-purple-700 mb-3">Symbol Multipliers</h3>
+                    <div id="payout-table" class="grid grid-cols-4 gap-2 text-center text-sm">
+                        <div class="font-bold bg-gray-100 p-2">Symbol</div>
+                        <div class="font-bold bg-gray-100 p-2">3x Match</div>
+                        <div class="font-bold bg-gray-100 p-2">4x Match</div>
+                        <div class="font-bold bg-gray-100 p-2">5x Match</div>
+                        <!-- Content injected by JS -->
+                    </div>
+                </section>
+
+                <section>
+                    <h3 class="text-lg font-semibold text-purple-700 mb-3 border-b pb-1">Winning Paylines</h3>
+                    <p class="text-sm text-gray-600 mb-4">Wins are calculated from left to right. At least 3 matching symbols are required.</p>
+                    <div class="flex flex-col md:flex-row gap-6 items-start">
+                        <div class="flex-shrink-0 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <div id="payline-preview" class="grid grid-cols-5 gap-1.5">
+                                <!-- Dots injected by JS -->
+                            </div>
+                        </div>
+                        <div id="paylines-list" class="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-500">
+                            <!-- Content injected by JS -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
     <!-- Deposit Overlay -->
     <div id="deposit-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center">
@@ -28,7 +65,7 @@
     </div>
 
     <!-- Cashout Overlay -->
-    <div id="cashout-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+    <div id="cashout-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center">
             <h2 class="text-2xl font-bold mb-4">Thanks for Playing!</h2>
             <p class="text-gray-600 mb-6">You cashed out:</p>
@@ -39,7 +76,14 @@
         </div>
     </div>
     <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-2xl">
-        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Slot Machine</h1>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Slot Machine</h1>
+            <button id="open-info" class="bg-purple-100 hover:bg-purple-200 text-purple-700 p-2 rounded-full transition-colors" title="More info">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </button>
+        </div>
         
         <div class="flex justify-between items-center mb-6 bg-gray-50 p-4 rounded-lg">
             <span class="text-gray-600 font-semibold">Balance:</span>
