@@ -43,7 +43,7 @@ def convert_reels_to_rows(reels: list) -> list[list[str]]:
     However, for checking winning combinations, it's more convenient to work with rows.
 
     :param reels: A list of lists, where each inner list represents a reel (column) of symbols.
-    :return: A list of lists, where each inner list represents a reel (column) of symbols.
+    :return: A list of lists, where each inner list represents a row of symbols.
 
     Example:
         >>> reels = [['A', 'B', 'C'], ['D', 'E', 'F'], ['G', 'H', 'I']]

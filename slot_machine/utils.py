@@ -28,7 +28,7 @@ def get_number_of_lines() -> int:
         lines = input(f"How many lines would you like to bet on? (1 - {MAX_LINES}): ")
         try:
             lines = int(lines)
-            if 1 <= lines <= 5:
+            if 1 <= lines <= MAX_LINES:
                 break
             else:
                 print(f"Please enter a number of lines from 1 to {MAX_LINES}.")

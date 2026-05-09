@@ -7,7 +7,9 @@ This project is a slot machine game created as a learning exercise, heavily insp
 *   **Language:** Python
 *   **IDE:** Visual Studio Code (VSCode) with Gemini plugin
 *   **Web Framework:** FastAPI & Uvicorn
+*   **Frontend:** HTML5, CSS3 (Tailwind CSS), JavaScript (Vanilla)
 *   **Testing Framework:** PyTest
+*   **E2E Testing:** Playwright
 
 ### Installation
 
@@ -15,6 +17,7 @@ This project is a slot machine game created as a learning exercise, heavily insp
    ```bash
    pip install -r requirements.txt
    ```
+   (Note: Playwright requires additional setup. Refer to Playwright documentation for browser installation.)
 
 ### How to Run
 
@@ -23,6 +26,7 @@ This project is a slot machine game created as a learning exercise, heavily insp
 uvicorn main:app --reload
 ```
 Once running, access the interactive Swagger documentation at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+Once running, access the Web UI at: http://127.0.0.1:8000/
 
 **CLI Version:**
 ```bash
