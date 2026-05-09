@@ -5,12 +5,15 @@ MAX_BET = 10
 ROWS = 3
 REELS = 5
 
+WILD_SYMBOL = "🌟"
+
 # pass this dictionary to get_slot_machine_spin() func
 SYMBOLS_AND_COUNT = {
-    "♠": 5,
+    "♠": 2,
     "♥": 5,
-    "♦": 10,
-    "♣": 10
+    "♦": 12,
+    "♣": 20,
+    WILD_SYMBOL: 1
 }
 
 WINNING_LINES = {
@@ -28,8 +31,9 @@ WINNING_LINES = {
 
 # pass this dictionary to check_all_winnings func
 SYMBOLS_AND_MULTIPLIERS = {
-    "♠": {3: 20, 4: 50, 5: 100},
-    "♥": {3: 15, 4: 40, 5: 80},
-    "♦": {3: 10, 4: 25, 5: 50},
-    "♣": {3: 5, 4: 15, 5: 30}
+    "♠": {3: 10, 4: 25, 5: 50},
+    "♥": {3: 7, 4: 15, 5: 30},
+    "♦": {3: 4, 4: 8, 5: 15},
+    "♣": {3: 2, 4: 4, 5: 8},
+    WILD_SYMBOL: {3: 10, 4: 25, 5: 50} # Matches highest symbol if pure Wild line
 }
