@@ -3,6 +3,7 @@ let winningLinesMap = {};
 let reelsCount = 3; // Fallback value
 let maxLines = 10;
 let maxBet = 10;
+let multipliersConfig = {};
 
 async function initGame() {
     try {
@@ -10,6 +11,7 @@ async function initGame() {
         const config = await response.json();
         maxLines = config.max_lines;
         maxBet = config.max_bet;
+        multipliersConfig = config.multipliers;
         document.getElementById('max-lines-label').textContent = maxLines;
         document.getElementById('max-bet-label').textContent = maxBet;
         
@@ -42,11 +44,90 @@ async function initGame() {
 
         // Store winning line coordinates for highlighting
         winningLinesMap = config.winning_lines_config;
-        // Initially hide the game UI until a deposit is made
         reelsCount = config.reels;
+        
+        // Populate info modal content
+        populateInfoModal(config);
     } catch (error) {
         console.error('Failed to load configuration', error);
     }
+}
+
+function populateInfoModal(config) {
+    const payoutTable = document.getElementById('payout-table');
+    const paylinesList = document.getElementById('paylines-list');
+    const previewGrid = document.getElementById('payline-preview');
+    
+    // Setup Preview Grid dots
+    previewGrid.innerHTML = '';
+    for (let i = 0; i < config.rows * config.reels; i++) {
+        const dot = document.createElement('div');
+        dot.className = "w-4 h-4 rounded-sm bg-gray-200 transition-all duration-300";
+        previewGrid.appendChild(dot);
+    }
+    
+    // Payouts
+    Object.entries(config.multipliers).forEach(([symbol, values]) => {
+        const row = [symbol, `${values[3]}x`, `${values[4]}x`, `${values[5]}x` ];
+        row.forEach(text => {
+            const div = document.createElement('div');
+            div.className = "p-2 border-b border-gray-100";
+            div.textContent = text;
+            payoutTable.appendChild(div);
+        });
+    });
+
+    // Payline Names (Simplified mapping for display)
+    const names = [
+        "Top Horizontal", "Middle Horizontal", "Bottom Horizontal",
+        "V-Shape", "Inverted V", "Hump", "Dip", "Zig-Zag Top", "Zig-Zag Bottom", "Staircase"
+    ];
+
+    for (let i = 1; i <= config.max_lines; i++) {
+        const div = document.createElement('div');
+        div.className = "payline-item flex justify-between border-b border-gray-50 py-2 px-3 cursor-pointer hover:bg-purple-50 rounded transition-all";
+        div.innerHTML = `<span class="font-bold text-purple-500">Line ${i}</span> <span>${names[i-1] || 'Complex Pattern'}</span>`;
+        div.onclick = () => updatePaylinePreview(i);
+        paylinesList.appendChild(div);
+    }
+
+    // Default preview to Line 1
+    updatePaylinePreview(1);
+}
+
+function updatePaylinePreview(lineNum) {
+    const dots = document.getElementById('payline-preview').children;
+    const coords = winningLinesMap[lineNum];
+    
+    // Reset all dots
+    Array.from(dots).forEach(dot => {
+        dot.classList.remove('bg-purple-500', 'scale-110', 'shadow-sm');
+        dot.classList.add('bg-gray-200');
+    });
+
+    // Highlight winning path on preview grid
+    coords.forEach(([row, col]) => {
+        const idx = row * reelsCount + col;
+        if (dots[idx]) {
+            dots[idx].classList.remove('bg-gray-200');
+            dots[idx].classList.add('bg-purple-500', 'scale-110', 'shadow-sm');
+        }
+    });
+
+    // Update active state in the text list
+    document.querySelectorAll('.payline-item').forEach((item, idx) => {
+        if (idx === lineNum - 1) {
+            item.classList.add('bg-purple-100', 'border-purple-200', 'shadow-sm');
+        } else {
+            item.classList.remove('bg-purple-100', 'border-purple-200', 'shadow-sm');
+        }
+    });
+}
+
+function toggleInfoModal(show) {
+    const modal = document.getElementById('info-modal');
+    modal.classList.toggle('hidden', !show);
+    modal.classList.toggle('flex', show);
 }
 
 function updateUI(data) {
@@ -117,6 +198,7 @@ function handleDeposit() {
         currentBalance = amount;
         document.getElementById('balance-display').textContent = `$${currentBalance}`;
         document.getElementById('deposit-overlay').classList.add('hidden');
+        document.getElementById('deposit-overlay').classList.remove('flex');
         document.getElementById('message-area').textContent = "Ready to play!";
     }
 }
@@ -130,13 +212,16 @@ function handleCashout() {
     // Show cashout modal
     document.getElementById('cashout-amount-display').textContent = `$${cashoutAmount}`;
     document.getElementById('cashout-overlay').classList.remove('hidden');
+    document.getElementById('cashout-overlay').classList.add('flex');
     // Optionally hide the main game content while modal is open
     document.querySelector('.bg-white.p-8').classList.add('hidden');
 }
 
 function handlePlayAgain() {
     document.getElementById('cashout-overlay').classList.add('hidden');
+    document.getElementById('cashout-overlay').classList.remove('flex');
     document.getElementById('deposit-overlay').classList.remove('hidden');
+    document.getElementById('deposit-overlay').classList.add('flex');
     document.querySelector('.bg-white.p-8').classList.remove('hidden'); // Show game content again
     document.getElementById('message-area').textContent = ""; // Clear previous messages
 }
@@ -170,6 +255,14 @@ document.getElementById('spin-button').addEventListener('click', handleSpin);
 document.getElementById('deposit-button').addEventListener('click', handleDeposit);
 document.getElementById('cashout-button').addEventListener('click', handleCashout); // Keep this for the button in the main UI
 document.getElementById('play-again-button').addEventListener('click', handlePlayAgain);
+document.getElementById('open-info').addEventListener('click', () => toggleInfoModal(true));
+document.getElementById('close-info').addEventListener('click', () => toggleInfoModal(false));
+
+// Close modal on overlay click
+document.getElementById('info-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'info-modal') toggleInfoModal(false);
+});
+
 
 // Validation Listeners
 document.getElementById('deposit-input').addEventListener('input', (e) => {
