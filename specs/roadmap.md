@@ -4,7 +4,7 @@ This roadmap outlines the evolution of the Slot Machine project, focusing on Spe
 
 ## Part I: Interface & Core Mechanics
 
-*   **Phase 1: Web-Based Interface (API & Frontend)**  
+*   **Phase 1: Web-Based Interface (API & Frontend) [Completed]**  
     Transition the interface from console-based to a web application using a Python backend (FastAPI/Flask) and a modern frontend.
 *   **Phase 2: Complex Winning Lines**  
     Define and implement non-horizontal winning patterns (diagonals, V-shapes, etc.) with precise coordinate specifications.
