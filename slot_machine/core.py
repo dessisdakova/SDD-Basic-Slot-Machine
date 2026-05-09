@@ -1,6 +1,6 @@
 import random
 
-from slot_machine.constants import SYMBOLS_AND_COUNT, WINNING_LINES, SYMBOLS_AND_MULTIPLIERS
+from slot_machine.constants import SYMBOLS_AND_COUNT, WINNING_LINES, SYMBOLS_AND_MULTIPLIERS, WILD_SYMBOL
 
 
 def _get_all_available_symbols() -> list[str]:
@@ -73,17 +73,27 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
 
     for line_num in range(1, lines + 1):
         positions = WINNING_LINES[line_num]
-        first_symbol = transposed_spin[positions[0][0]][positions[0][1]]
         
+        # Determine the target symbol for this line (first non-wild)
+        line_symbols = [transposed_spin[r][c] for r, c in positions]
+        target_symbol = None
+        for s in line_symbols:
+            if s != WILD_SYMBOL:
+                target_symbol = s
+                break
+        
+        if target_symbol is None: # Entire line is Wilds
+            target_symbol = "♠" # Treat as highest value symbol
+
         consecutive_matches = 0
-        for (row, col) in positions:
-            if transposed_spin[row][col] == first_symbol:
+        for s in line_symbols:
+            if s == target_symbol or s == WILD_SYMBOL:
                 consecutive_matches += 1
             else:
                 break
 
         if consecutive_matches >= 3:
-            multiplier = SYMBOLS_AND_MULTIPLIERS[first_symbol].get(consecutive_matches, 0)
+            multiplier = SYMBOLS_AND_MULTIPLIERS[target_symbol].get(consecutive_matches, 0)
             total_winnings += multiplier * bet
             winning_lines[line_num] = consecutive_matches
 
