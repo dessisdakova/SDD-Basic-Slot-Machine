@@ -1,9 +1,18 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
-from slot_machine.constants import MAX_LINES, MIN_BET, MAX_BET, ROWS, REELS, SYMBOLS_AND_COUNT
+from slot_machine.constants import MAX_LINES, MIN_BET, MAX_BET, ROWS, REELS, SYMBOLS_AND_COUNT, WINNING_LINES
 from slot_machine.game import execute_spin
 
 app = FastAPI(title="Slot Machine API")
+
+# Serve static files (HTML, CSS, JS)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+async def read_index():
+    return FileResponse("static/index.html")
 
 class SpinRequest(BaseModel):
     balance: int = Field(..., gt=0, description="The current player balance")
@@ -19,7 +28,8 @@ async def get_configuration():
         "max_bet": MAX_BET,
         "rows": ROWS,
         "reels": REELS,
-        "symbols": list(SYMBOLS_AND_COUNT.keys())
+        "symbols": list(SYMBOLS_AND_COUNT.keys()),
+        "winning_lines_config": WINNING_LINES
     }
 
 @app.post("/game/spin")
