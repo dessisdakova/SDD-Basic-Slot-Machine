@@ -4,21 +4,23 @@ This roadmap outlines the evolution of the Slot Machine project, focusing on Spe
 
 ## Part I: Interface & Core Mechanics
 
-*   **Phase 1: Web-Based Interface (API & Frontend) [Completed]**  
+*   **Phase 1: Web-Based Interface (API & Frontend) [Completed]**
     Transition the interface from console-based to a web application using a Python backend (FastAPI/Flask) and a modern frontend.
-*   **Phase 2: Complex Winning Lines**  
-    Define and implement non-horizontal winning patterns (diagonals, V-shapes, etc.) with precise coordinate specifications.
-*   **Phase 3: Wild Symbols**  
+*   **Phase 2: Complex Winning Lines [Completed]**
+    Expand to a 5-reel system (5x3 grid), implement 10 complex paylines, and add tiered payouts for 3, 4, or 5 matching symbols.
+*   **Phase 3: Information Modal [In Progress]**
+    Add a UI component to display game rules, symbol payouts, and winning line patterns.
+*   **Phase 4: Wild Symbols**  
     Introduce symbols that can substitute for others to complete winning combinations.
-*   **Phase 4: Scatter Symbols**  
+*   **Phase 5: Scatter Symbols**  
     Implement mechanics where symbols trigger payouts or events regardless of their position on paylines.
-*   **Phase 5: Bonus Symbols & Mini-Games**  
+*   **Phase 6: Bonus Symbols & Mini-Games**  
     Add special symbols that transition the game state into unique bonus rounds or mini-games.
-*   **Phase 6: Free Spins Feature**  
+*   **Phase 7: Free Spins Feature**  
     Develop the logic for awarding and executing free spins, including specialized multipliers.
-*   **Phase 7: Progressive Jackpots**  
+*   **Phase 8: Progressive Jackpots**  
     Implement a shared pool mechanism that accumulates value and defines specific hit conditions.
-*   **Phase 8: Nudge and Hold Features**  
+*   **Phase 9: Nudge and Hold Features**  
     Add player-initiated reel adjustments to increase interaction and strategic depth.
 
 ## Part II: Persistence & User Experience

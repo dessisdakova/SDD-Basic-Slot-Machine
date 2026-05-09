@@ -6,7 +6,10 @@ Transition the slot machine logic from a Command Line Interface (CLI) to a RESTf
 ## Constraints
 - **Statelessness:** Since we haven't implemented Phase 9 (Persistence), the API will be stateless. The client must track and send the current `balance` in the request.
 - **Validation:** All inputs (lines, bet, balance) must be validated against existing constants (`MAX_LINES`, `MIN_BET`, etc.).
-
+    - **Deposit:** Must be between $50 and $5000.
+    - **Lines:** Must be between 1 and 10.
+    - **Bet per Line:** Must be between $1 and $10.
+    
 ## API Endpoints
 
 ### 1. GET `/game/configuration`

@@ -82,12 +82,12 @@ def compare_total_bet_and_balance(balance: int) -> tuple[int, int, int]:
 
     return bet, lines, total_bet
 
-def print_winnings(winnings: int, winning_lines:list[int]):
+def print_winnings(winnings: int, winning_lines: dict[int, int]):
     """Print statistics for spin.
 
     :param winnings: Won amount.
-    :param winning_lines: all wining lines.
+    :param winning_lines: dictionary of winning lines and match counts.
     """
     print(f"You won ${winnings}.")
     if winnings:
-        print(f"You won on lines: ", *winning_lines)
+        print(f"You won on lines: ", *winning_lines.keys())
