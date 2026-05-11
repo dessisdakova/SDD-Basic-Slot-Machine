@@ -14,8 +14,8 @@ SYMBOLS_AND_COUNT = {
     "♥": 5,
     "♦": 12,
     "♣": 20,
-    WILD_SYMBOL: 1,
-    SCATTER_SYMBOL: 2
+    WILD_SYMBOL: 2,
+    SCATTER_SYMBOL: 5
 }
 
 WINNING_LINES = {
@@ -37,7 +37,7 @@ SYMBOLS_AND_MULTIPLIERS = {
     "♥": {3: 7, 4: 15, 5: 30},
     "♦": {3: 4, 4: 8, 5: 15},
     "♣": {3: 2, 4: 4, 5: 8},
-    WILD_SYMBOL: {3: 10, 4: 25, 5: 50} # Matches highest symbol if pure Wild line
+    WILD_SYMBOL: {3: 15, 4: 40, 5: 75} # Pays more than Spades for pure Wild lines
 }
 
 # Scatter payouts multiply the Total Bet (lines * bet)

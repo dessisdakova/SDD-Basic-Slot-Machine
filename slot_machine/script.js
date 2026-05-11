@@ -10,10 +10,14 @@ async function initGame() {
     try {
         const response = await fetch('/game/configuration');
         const config = await response.json();
+        
+        // SET GLOBALS IMMEDIATELY to avoid race conditions
+        winningLinesMap = config.winning_lines_config;
+        reelsCount = config.reels;
+        scatterSymbol = config.scatter_symbol;
         maxLines = config.max_lines;
         maxBet = config.max_bet;
         multipliersConfig = config.multipliers;
-        scatterSymbol = config.scatter_symbol;
         document.getElementById('max-lines-label').textContent = maxLines;
         document.getElementById('max-bet-label').textContent = maxBet;
         
@@ -36,35 +40,24 @@ async function initGame() {
         const grid = document.getElementById('slot-grid');
         grid.innerHTML = '';
         
-        // Enforce "once per reel" Scatter rule for initial grid
-        let initialGrid = Array.from({ length: config.rows }, () => []);
+        // Generate initial symbols reel by reel to enforce "once per reel" rule
+        let initialRows = [[], [], []];
         for (let c = 0; c < config.reels; c++) {
-            let pool = [...config.symbols];
+            let pool = [...config.symbols]; // Use unique symbol list
             for (let r = 0; r < config.rows; r++) {
                 let idx = Math.floor(Math.random() * pool.length);
-                let symbol = pool[idx];
-                initialGrid[r][c] = symbol;
-                
-                if (symbol === scatterSymbol) {
-                    pool = pool.filter(s => s !== symbol);
-                } else {
-                    pool.splice(idx, 1);
-                }
+                let symbol = pool.splice(idx, 1)[0];
+                initialRows[r][c] = symbol;
             }
         }
 
-        initialGrid.flat().forEach(symbol => {
+        initialRows.flat().forEach(symbol => {
             const cell = document.createElement('div');
             cell.className = 'slot-cell';
             cell.textContent = symbol;
-            cell.setAttribute('data-symbol', symbol);
             grid.appendChild(cell);
         });
 
-        // Store winning line coordinates for highlighting
-        winningLinesMap = config.winning_lines_config;
-        reelsCount = config.reels;
-        
         // Populate info modal content
         populateInfoModal(config);
     } catch (error) {
@@ -106,7 +99,7 @@ function populateInfoModal(config) {
         const div = document.createElement('div');
         div.className = "payline-item flex justify-between border-b border-gray-50 py-2 px-3 cursor-pointer hover:bg-purple-50 rounded transition-all";
         div.innerHTML = `<span class="font-bold text-purple-500">Line ${i}</span> <span>${names[i-1] || 'Complex Pattern'}</span>`;
-        div.onclick = () => updatePaylinePreview(i);
+        div.onclick = () => updatePaylinePreview(i.toString()); // API uses string keys
         paylinesList.appendChild(div);
     }
 
@@ -133,8 +126,8 @@ function populateInfoModal(config) {
     `;
     document.querySelector('#info-modal .space-y-6').appendChild(specialSection);
 
-    // Default preview to Line 1
-    updatePaylinePreview(1);
+    // Default preview to Line 1 (using string key)
+    updatePaylinePreview("1");
 }
 
 function updatePaylinePreview(lineNum) {
@@ -199,37 +192,41 @@ function updateUI(data) {
     });
 
     const winningLineNumbers = Object.keys(data.winning_lines);
+    const hasPaylineWins = winningLineNumbers.length > 0; // Check if there are any payline wins
+    const hasScatterWins = data.scatter_winnings > 0;
     
-    if (winningLineNumbers.length > 0) {
-        // If there are wins, dim everything first
+    if (hasPaylineWins || hasScatterWins) {
+        // If there are any wins (payline or scatter), dim everything first for visual contrast
         Array.from(grid.children).forEach(cell => cell.classList.add('dimmed-cell'));
 
-        // Highlight winning symbols and indicators
-        Object.entries(data.winning_lines).forEach(([lineNum, count]) => {
-            // Highlight indicator
-            const indicator = document.getElementById(`line-ind-${lineNum}`);
-            if (indicator) indicator.classList.add('active');
+        // Highlight winning symbols and indicators for paylines
+        if (hasPaylineWins) {
+            Object.entries(data.winning_lines).forEach(([lineNum, count]) => {
+                // Highlight indicator
+                const indicator = document.getElementById(`line-ind-${lineNum}`);
+                if (indicator) indicator.classList.add('active');
 
-            // Highlight specific symbols in the line
-            const coordinates = winningLinesMap[lineNum];
-            coordinates.forEach(([row, col], index) => {
-                const gridIndex = row * reelsCount + col;
-                if (index < count) {
-                    grid.children[gridIndex].classList.remove('dimmed-cell');
-                    grid.children[gridIndex].classList.add('winning-cell');
+                // Highlight specific symbols in the line
+                const coordinates = winningLinesMap[lineNum];
+                coordinates.forEach(([row, col], index) => {
+                    const gridIndex = row * reelsCount + col;
+                    if (index < count) {
+                        grid.children[gridIndex].classList.remove('dimmed-cell');
+                        grid.children[gridIndex].classList.add('winning-cell');
+                    }
+                });
+            });
+        }
+
+        // Highlight scatter symbols using the same logic as winning lines
+        if (hasScatterWins) {
+            Array.from(grid.children).forEach((cell, index) => {
+                if (cell.textContent === scatterSymbol) {
+                    cell.classList.remove('dimmed-cell');
+                    cell.classList.add('scatter-win'); // Apply the distinct scatter animation
                 }
             });
-        });
-    }
-
-    // Highlight scatter symbols
-    if (data.scatter_winnings > 0) {
-        Array.from(grid.children).forEach(cell => {
-            if (cell.textContent === scatterSymbol) {
-                cell.classList.remove('dimmed-cell');
-                cell.classList.add('scatter-cell');
-            }
-        });
+        }
     }
 
     // Show Result Message
@@ -286,6 +283,13 @@ async function handleSpin() {
     const lines = parseInt(document.getElementById('lines-input').value);
     const bet = parseInt(document.getElementById('bet-input').value);
     const messageArea = document.getElementById('message-area');
+
+    // Reset UI state for new spin
+    messageArea.innerHTML = "Spinning...";
+    messageArea.className = "mt-6 text-center font-medium text-gray-500";
+    Array.from(document.getElementById('slot-grid').children).forEach(cell => { // Clear all win-related classes
+        cell.classList.remove('dimmed-cell', 'winning-cell', 'scatter-win');
+    });
 
     try {
         const response = await fetch('/game/spin', {

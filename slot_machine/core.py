@@ -29,8 +29,12 @@ def generate_random_reels_in_spin(rows: int, reels: int) -> list[list[str]]:
         current_symbols = all_symbols[:]
         for _ in range(rows):
             value = random.choice(current_symbols)
-            current_symbols.remove(value)
             reel.append(value)
+            # Scatters appear once per reel; Wilds and others are unrestricted
+            if value == SCATTER_SYMBOL:
+                current_symbols = [s for s in current_symbols if s != value]
+            else:
+                current_symbols.remove(value)
         all_reels.append(reel)
 
     return all_reels
@@ -84,8 +88,8 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
                 target_symbol = s
                 break
         
-        if target_symbol is None: # Entire line is Wilds or Scatters
-            target_symbol = "♠" # Treat as highest value symbol
+        if target_symbol is None: # Entire line is Wilds (Scatters on line don't trigger lines)
+            target_symbol = WILD_SYMBOL
 
         consecutive_matches = 0
         for s in line_symbols:

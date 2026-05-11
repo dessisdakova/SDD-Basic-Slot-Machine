@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Specs-Driven Slot Machine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+        .slot-cell { @apply w-20 h-20 flex items-center justify-center text-4xl bg-white border-2 border-gray-300 rounded-lg shadow-inner relative; }
+        .winning-cell { @apply border-purple-400 bg-purple-50 animate-pulse; }
+        .dimmed-cell { @apply opacity-40 grayscale; }
+        .line-indicator { @apply w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 border border-gray-300 transition-colors duration-300; }
+        .line-indicator.active { @apply bg-purple-400 text-white border-purple-500 shadow-sm; }
+        .modal-overlay { @apply fixed inset-0 bg-black bg-opacity-50 z-50; } /* Base overlay style */
+        
+        /* Scatter Animation */
+        .scatter-win { animation: scatter-pulse 0.8s infinite alternate; @apply border-green-500 bg-green-50 z-10 border-4; }
+        @keyframes scatter-pulse {
+            0% { transform: scale(1); border-width: 2px; }
+            100% { transform: scale(1.1); border-width: 6px; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
+    <!-- Info Modal -->
+    <div id="info-modal" class="modal-overlay hidden flex items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-xl max-h-[80vh] overflow-y-auto relative">
+            <button id="close-info" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Game Rules & Payouts</h2>
+            
+            <div class="space-y-6">
+                <section>
+                    <h3 class="text-lg font-semibold text-purple-700 mb-3">Symbol Multipliers</h3>
+                    <div id="payout-table" class="grid grid-cols-4 gap-2 text-center text-sm">
+                        <div class="font-bold bg-gray-100 p-2">Symbol</div>
+                        <div class="font-bold bg-gray-100 p-2">3x Match</div>
+                        <div class="font-bold bg-gray-100 p-2">4x Match</div>
+                        <div class="font-bold bg-gray-100 p-2">5x Match</div>
+                        <!-- Content injected by JS -->
+                    </div>
+                </section>
+
+                <section>
+                    <h3 class="text-lg font-semibold text-purple-700 mb-3 border-b pb-1">Winning Paylines</h3>
+                    <p class="text-sm text-gray-600 mb-4">Wins are calculated from left to right. At least 3 matching symbols are required.</p>
+                    <div class="flex flex-col md:flex-row gap-6 items-start">
+                        <div class="flex-shrink-0 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <div id="payline-preview" class="grid grid-cols-5 gap-1.5">
+                                <!-- Dots injected by JS -->
+                            </div>
+                        </div>
+                        <div id="paylines-list" class="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-500">
+                            <!-- Content injected by JS -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deposit Overlay -->
+    <div id="deposit-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center">
+            <h2 class="text-2xl font-bold mb-4">Welcome to the Slots!</h2>
+            <p class="text-gray-600 mb-6">How much would you like to deposit?</p>
+            <input type="number" id="deposit-input" value="100" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 mb-1 text-center text-xl">
+            <p id="deposit-error" class="text-red-500 text-xs mb-4 hidden">Deposit must be between $50 and $5000.</p>
+            <button id="deposit-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-lg">
+                Deposit & Play
+            </button>
+        </div>
+    </div>
+
+    <!-- Cashout Overlay -->
+    <div id="cashout-overlay" class="modal-overlay hidden flex items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center">
+            <h2 class="text-2xl font-bold mb-4">Thanks for Playing!</h2>
+            <p class="text-gray-600 mb-6">You cashed out:</p>
+            <span id="cashout-amount-display" class="text-4xl font-bold text-blue-600 mb-6 block">$0</span>
+            <button id="play-again-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-lg">
+                Play Again
+            </button>
+        </div>
+    </div>
+    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Slot Machine</h1>
+            <button id="open-info" class="bg-purple-100 hover:bg-purple-200 text-purple-700 p-2 rounded-full transition-colors" title="More info">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </button>
+        </div>
+        
+        <div class="flex justify-between items-center mb-6 bg-gray-50 p-4 rounded-lg">
+            <span class="text-gray-600 font-semibold">Balance:</span>
+            <span id="balance-display" class="text-2xl font-bold text-green-600">$0</span>
+        </div>
+
+        <!-- Slot Grid -->
+        <div class="flex items-center justify-center gap-4 mb-8">
+            <div id="left-indicators" class="flex flex-col gap-2 h-full justify-around"></div>
+            <div id="slot-grid" class="grid grid-cols-5 gap-2">
+                <!-- Symbols will be injected here -->
+            </div>
+            <div id="right-indicators" class="flex flex-col gap-2 h-full justify-around"></div>
+        </div>
+
+        <!-- Controls -->
+        <div class="space-y-4">
+            <div class="flex flex-col">
+                <label class="text-sm font-medium text-gray-700">Lines to Bet (1-<span id="max-lines-label">10</span>)</label>
+                <input type="number" id="lines-input" value="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 transition-colors">
+                <p id="lines-error" class="text-red-500 text-xs mt-1 hidden">Please select 1 to 10 lines.</p>
+            </div>
+            <div class="flex flex-col">
+                <label class="text-sm font-medium text-gray-700">Bet per Line ($1 - $<span id="max-bet-label">10</span>)</label>
+                <input type="number" id="bet-input" value="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 transition-colors">
+                <p id="bet-error" class="text-red-500 text-xs mt-1 hidden">Bet must be between $1 and $10.</p>
+            </div>
+            
+            <div class="flex gap-2">
+                <button id="spin-button" class="flex-grow bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-lg active:transform active:scale-95">
+                    SPIN
+                </button>
+                <button id="cashout-button" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg transition duration-200 shadow-lg active:transform active:scale-95">
+                    CASHOUT
+                </button>
+            </div>
+        </div>
+
+        <div id="message-area" class="mt-6 text-center font-medium h-6"></div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
