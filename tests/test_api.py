@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from main import app
 from slot_machine.constants import MAX_LINES, MIN_BET, MAX_BET, ROWS, REELS, SYMBOLS_AND_COUNT, WINNING_LINES, SYMBOLS_AND_MULTIPLIERS
-from tests.pages.game_api_client import GameAPI
+from tests.game_api_client import GameAPI
 
 client = TestClient(app)
 game_api = GameAPI(client)

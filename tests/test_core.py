@@ -1,5 +1,4 @@
 from slot_machine.constants import SYMBOLS_AND_COUNT, ROWS, REELS, WILD_SYMBOL
-from slot_machine.constants import SYMBOLS_AND_COUNT, ROWS, REELS
 from slot_machine.core import _get_all_available_symbols, generate_random_reels_in_spin, convert_reels_to_rows, \
     check_winning_combinations
 
