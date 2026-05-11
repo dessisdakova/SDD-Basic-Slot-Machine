@@ -10,7 +10,7 @@ This roadmap outlines the evolution of the Slot Machine project, focusing on Spe
     Expand to a 5-reel system (5x3 grid), implement 10 complex paylines, and add tiered payouts for 3, 4, or 5 matching symbols.
 *   **Phase 3: Information Modal [Completed]**
     Add a UI component to display game rules, symbol payouts, and winning line patterns.
-*   **Phase 4: Wild Symbols [In Progress]**
+*   **Phase 4: Wild Symbols [Completed]**
     Introduce symbols that can substitute for others to complete winning combinations.
 *   **Phase 5: Scatter Symbols**  
     Implement mechanics where symbols trigger payouts or events regardless of their position on paylines.

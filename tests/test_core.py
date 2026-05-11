@@ -1,3 +1,4 @@
+from slot_machine.constants import SYMBOLS_AND_COUNT, ROWS, REELS, WILD_SYMBOL
 from slot_machine.constants import SYMBOLS_AND_COUNT, ROWS, REELS
 from slot_machine.core import _get_all_available_symbols, generate_random_reels_in_spin, convert_reels_to_rows, \
     check_winning_combinations
@@ -71,3 +72,40 @@ def test_check_winning_combinations_4rd_5th_lines():
     # ♣(5x)=8. Two lines win: 8*10 + 8*10 = 160
     assert winnings == 160
     assert winning_lines == {4: 5, 5: 5}
+
+def test_check_winning_combinations_with_wilds_completing_lines():
+    # Line 1: 🌟, ♠, 🌟, ♠, ♠ -> 5 matching ♠ (Substitution)
+    # Line 2: 🌟, 🌟, 🌟, 🌟, 🌟 -> 5 matching ♠ (Pure Wild Line)
+    # Line 3: 🌟, 🌟, ♦, ♣, ♣ -> 3 matching ♦ (Wilds start the line)
+    mock_spin = [
+        ["🌟", "♠", "🌟", "♠", "♠"],
+        ["🌟", "🌟", "🌟", "🌟", "🌟"],
+        ["🌟", "🌟", "♦", "♣", "♣"]
+    ]
+    bet = 10
+    lines = 3
+
+    winnings, winning_lines = check_winning_combinations(mock_spin, lines, bet)
+
+    # Line 1: ♠(5x)=50 * 10 = 500
+    # Line 2: ♠(5x)=50 * 10 = 500 (Defaults to ♠ for pure Wilds)
+    # Line 3: ♦(3x)=4 * 10 = 40
+    assert winnings == 1040
+    assert winning_lines == {1: 5, 2: 5, 3: 3}
+
+def test_check_winning_combinations_wild_interruption():
+    # Line 1: 🌟, 🌟, ♣, ♥, ♣ -> 3 matching ♣
+    mock_spin = [
+        ["🌟", "🌟", "♣", "♥", "♣"],
+        ["♥", "♥", "♥", "♥", "♥"],
+        ["♥", "♥", "♥", "♥", "♥"]
+    ]
+    bet = 1
+    lines = 1
+
+    winnings, winning_lines = check_winning_combinations(mock_spin, lines, bet)
+
+    # Target is ♣. Match count: 3.
+    # ♣(3x)=2 * 1 = 2
+    assert winnings == 2
+    assert winning_lines == {1: 3}
