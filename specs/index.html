@@ -6,21 +6,19 @@
     <title>Specs-Driven Slot Machine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style type="text/tailwindcss">
-        .slot-cell { @apply w-20 h-20 flex items-center justify-center text-4xl bg-white border-2 border-gray-300 rounded-lg shadow-inner relative; }
+        .slot-cell { @apply w-20 h-20 flex items-center justify-center text-4xl bg-white border-2 border-gray-300 rounded-lg shadow-inner; }
         .winning-cell { @apply border-purple-400 bg-purple-50 animate-pulse; }
         .dimmed-cell { @apply opacity-40 grayscale; }
         .line-indicator { @apply w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 border border-gray-300 transition-colors duration-300; }
         .line-indicator.active { @apply bg-purple-400 text-white border-purple-500 shadow-sm; }
+        .scatter-cell { @apply border-green-400 bg-green-50 animate-pulse; }
         .modal-overlay { @apply fixed inset-0 bg-black bg-opacity-50 z-50; }
-        
-        /* Scatter Highlight - Pulsing green, similar to winning lines */
-        .scatter-win { @apply border-green-400 bg-green-50 animate-pulse z-20 !opacity-100 !grayscale-0; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
     <!-- Info Modal -->
     <div id="info-modal" class="modal-overlay hidden flex items-center justify-center">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-xl max-h-[80vh] overflow-y-auto relative">
             <button id="close-info" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             <h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Game Rules & Payouts</h2>
             
@@ -29,7 +27,7 @@
                 <div>
                     <section class="mb-6">
                         <h3 class="text-lg font-semibold text-purple-700 mb-3 border-b pb-1">Symbol Multipliers</h3>
-                        <p class="text-sm text-gray-500 mb-2 italic">Multipliers applied to bet per line (or *Total Bet for Scatter).</p>
+                        <p class="text-sm text-gray-500 mb-2 italic">Multipliers applied to your bet per line for 3, 4, or 5 matches (Left to Right).</p>
                         <div id="payout-table" class="grid grid-cols-4 gap-2 text-center text-sm">
                             <div class="font-bold bg-gray-100 p-2 rounded">Symbol</div>
                             <div class="font-bold bg-gray-100 p-2 rounded">3x</div>
@@ -54,7 +52,7 @@
                         <p class="text-sm text-gray-600 mb-4">Click a line to see its path. Wins are calculated from left to right.</p>
                         <div class="flex flex-col gap-4">
                             <div class="flex-shrink-0 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                <div id="payline-preview" class="grid grid-cols-5 gap-0.5 w-fit">
+                                <div id="payline-preview" class="grid grid-cols-5 gap-1.5">
                                     <!-- Dots injected by JS -->
                                 </div>
                             </div>
@@ -82,7 +80,7 @@
     </div>
 
     <!-- Cashout Overlay -->
-    <div id="cashout-overlay" class="modal-overlay hidden flex items-center justify-center">
+    <div id="cashout-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center">
             <h2 class="text-2xl font-bold mb-4">Thanks for Playing!</h2>
             <p class="text-gray-600 mb-6">You cashed out:</p>

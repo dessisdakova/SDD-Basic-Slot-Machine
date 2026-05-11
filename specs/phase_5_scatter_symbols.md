@@ -15,6 +15,7 @@ Introduce a "Scatter" symbol that provides payouts regardless of its position on
     - 5 Scatters: 50x Total Bet
 
 ## Constraints
+- Scatter symbols can appear at most once per reel, meaning a maximum of 5 Scatters can appear on the grid per spin.
 - Scatter symbols are **not** substituted by Wild symbols ("🌟").
 - Only the highest Scatter payout is awarded if multiple thresholds are met (e.g., 4 Scatters pays the 10x tier, not 2x + 10x).
 

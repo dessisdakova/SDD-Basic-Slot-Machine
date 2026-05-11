@@ -41,24 +41,17 @@ async function initGame() {
         grid.innerHTML = '';
         
         // Generate initial symbols reel by reel to enforce "once per reel" rule
-        let initialGrid = Array.from({ length: config.rows }, () => []);
+        let initialRows = [[], [], []];
         for (let c = 0; c < config.reels; c++) {
-            let pool = [...config.symbols];
+            let pool = [...config.symbols]; // Use unique symbol list
             for (let r = 0; r < config.rows; r++) {
                 let idx = Math.floor(Math.random() * pool.length);
-                let symbol = pool[idx];
-                initialGrid[r][c] = symbol;
-                
-                // Remove special symbols entirely from the pool for this reel
-                if (symbol === scatterSymbol || symbol === "🌟") {
-                    pool = pool.filter(s => s !== symbol);
-                } else {
-                    pool.splice(idx, 1);
-                }
+                let symbol = pool.splice(idx, 1)[0];
+                initialRows[r][c] = symbol;
             }
         }
 
-        initialGrid.flat().forEach(symbol => {
+        initialRows.flat().forEach(symbol => {
             const cell = document.createElement('div');
             cell.className = 'slot-cell';
             cell.textContent = symbol;
@@ -109,30 +102,29 @@ function populateInfoModal(config) {
         div.onclick = () => updatePaylinePreview(i.toString()); // API uses string keys
         paylinesList.appendChild(div);
     }
-    
-    // Add Scatter row to the payout table manually
-    const scatterRow = [
-        config.scatter_symbol, 
-        `${config.scatter_multipliers['3']}x*`, 
-        `${config.scatter_multipliers['4']}x*`, 
-        `${config.scatter_multipliers['5']}x*`
-    ];
-    scatterRow.forEach(text => {
-        const div = document.createElement('div');
-        div.className = "p-2 border-b border-purple-50 font-bold text-purple-700 bg-purple-50/50";
-        div.textContent = text;
-        payoutTable.appendChild(div);
-    });
 
-    // Populate General Rules Section
-    const generalRulesContent = document.getElementById('general-rules-content');
-    generalRulesContent.innerHTML = `
-        <div class="space-y-2">
-            <p>🌟 <strong>Wild Symbol:</strong> Substitutes for any standard symbol. A line of pure Wilds pays the highest multiplier.</p>
-            <p>💎 <strong>Scatter Symbol:</strong> 3+ symbols anywhere on the grid award a multiplier of your <strong>Total Bet</strong> (indicated by * in the table).</p>
-            <p>ℹ️ Wins are calculated from left to right on active paylines.</p>
+    // Add Scatter Symbols Section
+    const scatterSection = document.createElement('section');
+    scatterSection.className = "mt-6 pt-4 border-t border-gray-100";
+    scatterSection.innerHTML = `
+        <h3 class="text-lg font-semibold text-purple-700 mb-2">💎 Scatter Symbols</h3>
+        <p class="text-sm text-gray-600 mb-2">Scatter wins trigger from 3+ symbols anywhere and multiply the <strong>Total Bet</strong>.</p>
+        <div class="grid grid-cols-3 gap-2 text-center text-xs font-bold">
+            <div class="bg-purple-50 p-2 rounded">3x: ${config.scatter_multipliers['3']}x</div>
+            <div class="bg-purple-50 p-2 rounded">4x: ${config.scatter_multipliers['4']}x</div>
+            <div class="bg-purple-50 p-2 rounded">5x: ${config.scatter_multipliers['5']}x</div>
         </div>
     `;
+    document.querySelector('#info-modal .space-y-6').appendChild(scatterSection);
+
+    // Add Special Symbols Section
+    const specialSection = document.createElement('section');
+    specialSection.className = "mt-6 pt-4 border-t border-gray-100";
+    specialSection.innerHTML = `
+        <h3 class="text-lg font-semibold text-purple-700 mb-2">Special Symbols</h3>
+        <p class="text-sm text-gray-600">🌟 <strong>Wild Symbol:</strong> Substitutes for any symbol to form the highest possible winning combination on a payline.</p>
+    `;
+    document.querySelector('#info-modal .space-y-6').appendChild(specialSection);
 
     // Default preview to Line 1 (using string key)
     updatePaylinePreview("1");
@@ -200,7 +192,7 @@ function updateUI(data) {
     });
 
     const winningLineNumbers = Object.keys(data.winning_lines);
-    const hasPaylineWins = winningLineNumbers.length > 0;
+    const hasPaylineWins = winningLineNumbers.length > 0; // Check if there are any payline wins
     const hasScatterWins = data.scatter_winnings > 0;
     
     if (hasPaylineWins || hasScatterWins) {
@@ -228,14 +220,10 @@ function updateUI(data) {
 
         // Highlight scatter symbols using the same logic as winning lines
         if (hasScatterWins) {
-            console.log("Scatter win detected! Highlighting positions:", data.scatter_positions); // DEBUG LOG
-            data.scatter_positions.forEach(([row, col]) => {
-                const gridIndex = row * reelsCount + col;
-                const cell = grid.children[gridIndex];
-                if (cell) { // Ensure the cell exists
+            Array.from(grid.children).forEach((cell, index) => {
+                if (cell.textContent === scatterSymbol) {
                     cell.classList.remove('dimmed-cell');
-                    cell.classList.add('scatter-win');
-                    console.log(`Applied scatter-win to cell at [${row},${col}] (grid index ${gridIndex})`); // DEBUG LOG
+                    cell.classList.add('scatter-win'); // Apply the distinct scatter animation
                 }
             });
         }
@@ -299,7 +287,7 @@ async function handleSpin() {
     // Reset UI state for new spin
     messageArea.innerHTML = "Spinning...";
     messageArea.className = "mt-6 text-center font-medium text-gray-500";
-    Array.from(document.getElementById('slot-grid').children).forEach(cell => {
+    Array.from(document.getElementById('slot-grid').children).forEach(cell => { // Clear all win-related classes
         cell.classList.remove('dimmed-cell', 'winning-cell', 'scatter-win');
     });
 

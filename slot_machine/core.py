@@ -29,8 +29,12 @@ def generate_random_reels_in_spin(rows: int, reels: int) -> list[list[str]]:
         current_symbols = all_symbols[:]
         for _ in range(rows):
             value = random.choice(current_symbols)
-            current_symbols.remove(value)
             reel.append(value)
+            # Scatters appear once per reel; Wilds and others are unrestricted
+            if value == SCATTER_SYMBOL:
+                current_symbols = [s for s in current_symbols if s != value]
+            else:
+                current_symbols.remove(value)
         all_reels.append(reel)
 
     return all_reels
@@ -58,7 +62,7 @@ def convert_reels_to_rows(reels: list) -> list[list[str]]:
 
     return rows
 
-def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> tuple[int, dict[int, int], int, int]:
+def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> tuple[int, dict[int, int], int, int, list[list[int]]]:
     """Check for winning combinations in the transposed spin and calculates winnings.
 
     :param transposed_spin: A list of lists representing the rows of the slot machine.
@@ -69,9 +73,11 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
             - A dictionary of winning lines {line_number: match_count}.
             - Total scatter winnings (int).
             - Total scatter symbols found (int).
+            - Coordinates of found scatter symbols [[row, col], ...].
     """
     total_winnings = 0
     winning_lines = {}
+    scatter_positions = [] # Initialize scatter_positions here
 
     for line_num in range(1, lines + 1):
         positions = WINNING_LINES[line_num]
@@ -84,8 +90,8 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
                 target_symbol = s
                 break
         
-        if target_symbol is None: # Entire line is Wilds or Scatters
-            target_symbol = "♠" # Treat as highest value symbol
+        if target_symbol is None: # Entire line is Wilds (Scatters on line don't trigger lines)
+            target_symbol = WILD_SYMBOL
 
         consecutive_matches = 0
         for s in line_symbols:
@@ -99,9 +105,13 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
             total_winnings += multiplier * bet
             winning_lines[line_num] = consecutive_matches
 
-    # Scatter Logic: Check for SCATTER_SYMBOL anywhere on the grid
-    all_symbols = [symbol for row in transposed_spin for symbol in row]
-    scatter_count = all_symbols.count(SCATTER_SYMBOL)
+    # Scatter Logic: Find all SCATTER_SYMBOL coordinates on the grid
+    for r, row in enumerate(transposed_spin):
+        for c, symbol in enumerate(row):
+            if symbol == SCATTER_SYMBOL:
+                scatter_positions.append([r, c])
+    
+    scatter_count = len(scatter_positions)
     scatter_winnings = 0
 
     if scatter_count >= 3:
@@ -111,4 +121,4 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
             multiplier = SCATTER_MULTIPLIERS[max(possible_tiers)]
             scatter_winnings = multiplier * (lines * bet)
 
-    return total_winnings + scatter_winnings, winning_lines, scatter_winnings, scatter_count
+    return total_winnings + scatter_winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions

@@ -14,7 +14,7 @@ def execute_spin(balance: int, lines: int, bet: int) -> dict:
 
     spin_reels = generate_random_reels_in_spin(ROWS, REELS)
     transposed_spin = convert_reels_to_rows(spin_reels)
-    winnings, winning_lines, scatter_winnings, scatter_count = check_winning_combinations(transposed_spin, lines, bet)
+    winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions = check_winning_combinations(transposed_spin, lines, bet)
 
     return {
         "spin_result": transposed_spin,
@@ -22,6 +22,7 @@ def execute_spin(balance: int, lines: int, bet: int) -> dict:
         "winning_lines": winning_lines,
         "scatter_winnings": scatter_winnings,
         "scatter_count": scatter_count,
+        "scatter_positions": scatter_positions,
         "total_bet": total_bet,
         "new_balance": balance - total_bet + winnings
     }

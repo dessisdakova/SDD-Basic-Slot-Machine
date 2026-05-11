@@ -11,56 +11,46 @@
         .dimmed-cell { @apply opacity-40 grayscale; }
         .line-indicator { @apply w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 border border-gray-300 transition-colors duration-300; }
         .line-indicator.active { @apply bg-purple-400 text-white border-purple-500 shadow-sm; }
-        .modal-overlay { @apply fixed inset-0 bg-black bg-opacity-50 z-50; }
+        .modal-overlay { @apply fixed inset-0 bg-black bg-opacity-50 z-50; } /* Base overlay style */
         
-        /* Scatter Highlight - Pulsing green, similar to winning lines */
-        .scatter-win { @apply border-green-400 bg-green-50 animate-pulse z-20 !opacity-100 !grayscale-0; }
+        /* Scatter Animation */
+        .scatter-win { animation: scatter-pulse 0.8s infinite alternate; @apply border-green-500 bg-green-50 z-10 border-4; }
+        @keyframes scatter-pulse {
+            0% { transform: scale(1); border-width: 2px; }
+            100% { transform: scale(1.1); border-width: 6px; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
     <!-- Info Modal -->
     <div id="info-modal" class="modal-overlay hidden flex items-center justify-center">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-xl max-h-[80vh] overflow-y-auto relative">
             <button id="close-info" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             <h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Game Rules & Payouts</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Left Column: Symbol Multipliers & General Rules -->
-                <div>
-                    <section class="mb-6">
-                        <h3 class="text-lg font-semibold text-purple-700 mb-3 border-b pb-1">Symbol Multipliers</h3>
-                        <p class="text-sm text-gray-500 mb-2 italic">Multipliers applied to bet per line (or *Total Bet for Scatter).</p>
-                        <div id="payout-table" class="grid grid-cols-4 gap-2 text-center text-sm">
-                            <div class="font-bold bg-gray-100 p-2 rounded">Symbol</div>
-                            <div class="font-bold bg-gray-100 p-2 rounded">3x</div>
-                            <div class="font-bold bg-gray-100 p-2 rounded">4x</div>
-                            <div class="font-bold bg-gray-100 p-2 rounded">5x</div>
-                            <!-- Content injected by JS -->
-                        </div>
-                    </section>
+            <div class="space-y-6">
+                <section>
+                    <h3 class="text-lg font-semibold text-purple-700 mb-3">Symbol Multipliers</h3>
+                    <div id="payout-table" class="grid grid-cols-4 gap-2 text-center text-sm">
+                        <div class="font-bold bg-gray-100 p-2">Symbol</div>
+                        <div class="font-bold bg-gray-100 p-2">3x Match</div>
+                        <div class="font-bold bg-gray-100 p-2">4x Match</div>
+                        <div class="font-bold bg-gray-100 p-2">5x Match</div>
+                        <!-- Content injected by JS -->
+                    </div>
+                </section>
 
-                    <section>
-                        <h3 class="text-lg font-semibold text-purple-700 mb-3 border-b pb-1">General Rules</h3>
-                        <div id="general-rules-content" class="space-y-2 text-sm text-gray-600">
-                            <!-- Content injected by JS -->
+                <section>
+                    <h3 class="text-lg font-semibold text-purple-700 mb-3 border-b pb-1">Winning Paylines</h3>
+                    <p class="text-sm text-gray-600 mb-4">Wins are calculated from left to right. At least 3 matching symbols are required.</p>
+                    <div class="flex flex-col md:flex-row gap-6 items-start">
+                        <div class="flex-shrink-0 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <div id="payline-preview" class="grid grid-cols-5 gap-1.5">
+                                <!-- Dots injected by JS -->
+                            </div>
                         </div>
-                    </section>
-                </div>
-
-                <!-- Right Column: Winning Paylines -->
-                <div>
-                    <section>
-                        <h3 class="text-lg font-semibold text-purple-700 mb-3 border-b pb-1">Winning Paylines</h3>
-                        <p class="text-sm text-gray-600 mb-4">Click a line to see its path. Wins are calculated from left to right.</p>
-                        <div class="flex flex-col gap-4">
-                            <div class="flex-shrink-0 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                <div id="payline-preview" class="grid grid-cols-5 gap-0.5 w-fit">
-                                    <!-- Dots injected by JS -->
-                                </div>
-                            </div>
-                            <div id="paylines-list" class="flex-grow grid grid-cols-1 gap-2 text-xs text-gray-500">
-                                <!-- Content injected by JS -->
-                            </div>
+                        <div id="paylines-list" class="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-500">
+                            <!-- Content injected by JS -->
                         </div>
                     </div>
                 </section>

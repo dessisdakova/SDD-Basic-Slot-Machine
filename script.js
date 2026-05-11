@@ -228,14 +228,12 @@ function updateUI(data) {
 
         // Highlight scatter symbols using the same logic as winning lines
         if (hasScatterWins) {
-            console.log("Scatter win detected! Highlighting positions:", data.scatter_positions); // DEBUG LOG
             data.scatter_positions.forEach(([row, col]) => {
                 const gridIndex = row * reelsCount + col;
                 const cell = grid.children[gridIndex];
                 if (cell) { // Ensure the cell exists
                     cell.classList.remove('dimmed-cell');
                     cell.classList.add('scatter-win');
-                    console.log(`Applied scatter-win to cell at [${row},${col}] (grid index ${gridIndex})`); // DEBUG LOG
                 }
             });
         }
