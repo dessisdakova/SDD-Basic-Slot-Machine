@@ -40,7 +40,6 @@ async function initGame() {
 
         // Populate initial random symbols
         const grid = document.getElementById('slot-grid');
-        grid.innerHTML = '';
         
         // Generate initial symbols reel by reel to enforce "once per reel" rule
         let initialGrid = Array.from({ length: config.rows }, () => []);
@@ -52,15 +51,15 @@ async function initGame() {
                 if (c === 0 || c === config.reels - 1) {
                     availablePool = availablePool.filter(s => s !== bonusSymbol);
                 }
-                let idx = Math.floor(Math.random() * availablePool.length);
-                let symbol = availablePool[idx];
+                let idx = Math.floor(Math.random() * availablePool.length); // Choose from filtered pool
+                let symbol = availablePool[idx]; 
                 initialGrid[r][c] = symbol;
                 
                 // Remove special symbols entirely from the pool for this reel
-                if (symbol === scatterSymbol || symbol === "🌟" || symbol === bonusSymbol) {
+                if (symbol === scatterSymbol || symbol === "🌟" || symbol === bonusSymbol) { // If chosen symbol is special
                     pool = pool.filter(s => s !== symbol);
                 } else {
-                    pool.splice(pool.indexOf(symbol), 1);
+                    pool.splice(pool.indexOf(symbol), 1); // For regular symbols, remove only one instance
                 }
             }
         }
@@ -69,6 +68,7 @@ async function initGame() {
             const cell = document.createElement('div');
             cell.className = 'slot-cell';
             cell.textContent = symbol;
+            cell.setAttribute('data-symbol', symbol); // Set data-symbol for reliable comparison
             grid.appendChild(cell);
         });
 
@@ -116,15 +116,6 @@ function populateInfoModal(config) {
         div.onclick = () => updatePaylinePreview(i.toString()); // API uses string keys
         paylinesList.appendChild(div);
     }
-
-    // Add Bonus row to the payout table manually
-    const bonusRow = [config.bonus_symbol, "N/A", "N/A", "Triggers Bonus!"];
-    bonusRow.forEach(text => {
-        const div = document.createElement('div');
-        div.className = "p-2 border-b border-purple-50 font-bold text-purple-700 bg-purple-50/50";
-        div.textContent = text;
-        payoutTable.appendChild(div);
-    });
     
     // Add Scatter row to the payout table manually
     const scatterRow = [
@@ -146,7 +137,6 @@ function populateInfoModal(config) {
         <div class="space-y-2">
             <p>🌟 <strong>Wild Symbol:</strong> Substitutes for any standard symbol. A line of pure Wilds pays the highest multiplier.</p>
             <p>💎 <strong>Scatter Symbol:</strong> 3+ symbols anywhere on the grid award a multiplier of your <strong>Total Bet</strong> (indicated by * in the table).</p>
-            <p>🎁 <strong>Bonus Symbol:</strong> Appears only on reels 2, 3, and 4. 3+ symbols trigger a mini-game for mystery prizes!</p>
             <p>ℹ️ Wins are calculated from left to right on active paylines.</p>
         </div>
     `;
@@ -201,19 +191,18 @@ function updateUI(data) {
     balanceDisplay.textContent = `$${currentBalance}`;
 
     // Reset indicators
-    // (Handled in handleSpin for immediate feedback, but kept here for safety)
-    indicators.forEach(ind => ind.classList.remove('active')); 
+    indicators.forEach(ind => ind.classList.remove('active'));
 
     // Update Grid
-    let cellIndex = 0;
-    data.spin_result.forEach(row => {
-        row.forEach(symbol => {
-            const cell = grid.children[cellIndex];
-            if (cell) {
-                cell.textContent = symbol;
-                cell.setAttribute('data-symbol', symbol);
-            }
-            cellIndex++;
+    grid.innerHTML = '';
+    data.spin_result.forEach((row, rowIndex) => {
+        row.forEach((symbol, colIndex) => {
+            const cell = document.createElement('div');
+            cell.className = 'slot-cell';
+            cell.textContent = symbol;
+            
+            // Highlight winning lines if necessary (basic implementation)
+            grid.appendChild(cell);
         });
     });
 
@@ -323,10 +312,6 @@ async function handleSpin() {
 
     const indicators = document.querySelectorAll('.line-indicator');
     indicators.forEach(ind => ind.classList.remove('active'));
-
-    Array.from(document.getElementById('slot-grid').children).forEach(cell => {
-        cell.classList.remove('dimmed-cell', 'winning-cell', 'scatter-win');
-    });
 
     try {
         const response = await fetch('/game/spin', {
