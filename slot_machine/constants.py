@@ -7,6 +7,7 @@ REELS = 5
 
 WILD_SYMBOL = "🌟"
 SCATTER_SYMBOL = "💎"
+BONUS_SYMBOL = "🎁"
 
 # pass this dictionary to get_slot_machine_spin() func
 SYMBOLS_AND_COUNT = {
@@ -15,7 +16,8 @@ SYMBOLS_AND_COUNT = {
     "♦": 12,
     "♣": 20,
     WILD_SYMBOL: 2,
-    SCATTER_SYMBOL: 5
+    SCATTER_SYMBOL: 4,
+    BONUS_SYMBOL: 10 # Bonus symbol frequency
 }
 
 WINNING_LINES = {
@@ -45,4 +47,11 @@ SCATTER_MULTIPLIERS = {
     3: 2,
     4: 10,
     5: 50
+}
+
+# Bonus Mini-Game Prizes (multipliers of total bet)
+BONUS_MINI_GAME_PRIZES = {
+    "10x": 10,
+    "25x": 25,
+    "200x": 200
 }
