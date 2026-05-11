@@ -4,6 +4,7 @@ let reelsCount = 3; // Fallback value
 let maxLines = 10;
 let maxBet = 10;
 let multipliersConfig = {};
+let scatterSymbol = '';
 
 async function initGame() {
     try {
@@ -12,6 +13,7 @@ async function initGame() {
         maxLines = config.max_lines;
         maxBet = config.max_bet;
         multipliersConfig = config.multipliers;
+        scatterSymbol = config.scatter_symbol;
         document.getElementById('max-lines-label').textContent = maxLines;
         document.getElementById('max-bet-label').textContent = maxBet;
         
@@ -90,6 +92,20 @@ function populateInfoModal(config) {
         div.onclick = () => updatePaylinePreview(i);
         paylinesList.appendChild(div);
     }
+
+    // Add Scatter Symbols Section
+    const scatterSection = document.createElement('section');
+    scatterSection.className = "mt-6 pt-4 border-t border-gray-100";
+    scatterSection.innerHTML = `
+        <h3 class="text-lg font-semibold text-purple-700 mb-2">💎 Scatter Symbols</h3>
+        <p class="text-sm text-gray-600 mb-2">Scatter wins trigger from 3+ symbols anywhere and multiply the <strong>Total Bet</strong>.</p>
+        <div class="grid grid-cols-3 gap-2 text-center text-xs font-bold">
+            <div class="bg-purple-50 p-2 rounded">3x: ${config.scatter_multipliers['3']}x</div>
+            <div class="bg-purple-50 p-2 rounded">4x: ${config.scatter_multipliers['4']}x</div>
+            <div class="bg-purple-50 p-2 rounded">5x: ${config.scatter_multipliers['5']}x</div>
+        </div>
+    `;
+    document.querySelector('#info-modal .space-y-6').appendChild(scatterSection);
 
     // Add Special Symbols Section
     const specialSection = document.createElement('section');
@@ -189,12 +205,26 @@ function updateUI(data) {
         });
     }
 
+    // Highlight scatter symbols
+    if (data.scatter_winnings > 0) {
+        Array.from(grid.children).forEach(cell => {
+            if (cell.textContent === scatterSymbol) {
+                cell.classList.remove('dimmed-cell');
+                cell.classList.add('scatter-cell');
+            }
+        });
+    }
+
     // Show Result Message
     if (data.winnings > 0) {
-        messageArea.textContent = `🎉 You won $${data.winnings}!`;
+        let winMsg = `🎉 You won $${data.winnings}!`;
+        if (data.scatter_winnings > 0) {
+            winMsg += `<br><span class="text-sm text-purple-600 font-bold">💎 Scatter Win: ${data.scatter_count} Diamonds won $${data.scatter_winnings}!</span>`;
+        }
+        messageArea.innerHTML = winMsg;
         messageArea.className = 'mt-6 text-center font-bold text-green-600 animate-bounce';
     } else {
-        messageArea.textContent = 'Better luck next time!';
+        messageArea.innerHTML = 'Better luck next time!';
         messageArea.className = 'mt-6 text-center font-medium text-gray-500';
     }
 }
@@ -252,7 +282,16 @@ async function handleSpin() {
         if (response.ok) {
             updateUI(data);
         } else {
-            messageArea.textContent = `❌ ${data.detail}`;
+            let errorMessage = "";
+            if (Array.isArray(data.detail)) {
+                errorMessage = "❌ Validation Errors:<br>";
+                data.detail.forEach(error => {
+                    errorMessage += `- ${error.msg} (Field: ${error.loc.join('.')})<br>`;
+                });
+            } else {
+                errorMessage = `❌ ${data.detail}`;
+            }
+            messageArea.innerHTML = errorMessage;
             messageArea.className = 'mt-6 text-center font-medium text-red-600';
         }
     } catch (error) {

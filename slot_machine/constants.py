@@ -6,6 +6,7 @@ ROWS = 3
 REELS = 5
 
 WILD_SYMBOL = "🌟"
+SCATTER_SYMBOL = "💎"
 
 # pass this dictionary to get_slot_machine_spin() func
 SYMBOLS_AND_COUNT = {
@@ -13,7 +14,8 @@ SYMBOLS_AND_COUNT = {
     "♥": 5,
     "♦": 12,
     "♣": 20,
-    WILD_SYMBOL: 1
+    WILD_SYMBOL: 1,
+    SCATTER_SYMBOL: 2
 }
 
 WINNING_LINES = {
@@ -36,4 +38,11 @@ SYMBOLS_AND_MULTIPLIERS = {
     "♦": {3: 4, 4: 8, 5: 15},
     "♣": {3: 2, 4: 4, 5: 8},
     WILD_SYMBOL: {3: 10, 4: 25, 5: 50} # Matches highest symbol if pure Wild line
+}
+
+# Scatter payouts multiply the Total Bet (lines * bet)
+SCATTER_MULTIPLIERS = {
+    3: 2,
+    4: 10,
+    5: 50
 }

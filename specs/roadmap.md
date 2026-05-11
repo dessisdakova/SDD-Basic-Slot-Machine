@@ -12,7 +12,7 @@ This roadmap outlines the evolution of the Slot Machine project, focusing on Spe
     Add a UI component to display game rules, symbol payouts, and winning line patterns.
 *   **Phase 4: Wild Symbols [Completed]**
     Introduce symbols that can substitute for others to complete winning combinations.
-*   **Phase 5: Scatter Symbols [In Progress]**
+*   **Phase 5: Scatter Symbols [Completed]**
     Implement mechanics where symbols trigger payouts or events regardless of their position on paylines.
 *   **Phase 6: Bonus Symbols & Mini-Games**  
     Add special symbols that transition the game state into unique bonus rounds or mini-games.

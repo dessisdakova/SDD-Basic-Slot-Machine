@@ -1,6 +1,6 @@
 import random
 
-from slot_machine.constants import SYMBOLS_AND_COUNT, WINNING_LINES, SYMBOLS_AND_MULTIPLIERS, WILD_SYMBOL
+from slot_machine.constants import SYMBOLS_AND_COUNT, WINNING_LINES, SYMBOLS_AND_MULTIPLIERS, WILD_SYMBOL, SCATTER_SYMBOL, SCATTER_MULTIPLIERS
 
 
 def _get_all_available_symbols() -> list[str]:
@@ -58,7 +58,7 @@ def convert_reels_to_rows(reels: list) -> list[list[str]]:
 
     return rows
 
-def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> tuple[int, dict[int, int]]:
+def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> tuple[int, dict[int, int], int, int]:
     """Check for winning combinations in the transposed spin and calculates winnings.
 
     :param transposed_spin: A list of lists representing the rows of the slot machine.
@@ -67,6 +67,8 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
     :return: A tuple containing:
             - The total winnings (int).
             - A dictionary of winning lines {line_number: match_count}.
+            - Total scatter winnings (int).
+            - Total scatter symbols found (int).
     """
     total_winnings = 0
     winning_lines = {}
@@ -74,15 +76,15 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
     for line_num in range(1, lines + 1):
         positions = WINNING_LINES[line_num]
         
-        # Determine the target symbol for this line (first non-wild)
+        # Determine the target symbol for this line (first non-wild, non-scatter)
         line_symbols = [transposed_spin[r][c] for r, c in positions]
         target_symbol = None
         for s in line_symbols:
-            if s != WILD_SYMBOL:
+            if s != WILD_SYMBOL and s != SCATTER_SYMBOL:
                 target_symbol = s
                 break
         
-        if target_symbol is None: # Entire line is Wilds
+        if target_symbol is None: # Entire line is Wilds or Scatters
             target_symbol = "♠" # Treat as highest value symbol
 
         consecutive_matches = 0
@@ -97,4 +99,16 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
             total_winnings += multiplier * bet
             winning_lines[line_num] = consecutive_matches
 
-    return total_winnings, winning_lines
+    # Scatter Logic: Check for SCATTER_SYMBOL anywhere on the grid
+    all_symbols = [symbol for row in transposed_spin for symbol in row]
+    scatter_count = all_symbols.count(SCATTER_SYMBOL)
+    scatter_winnings = 0
+
+    if scatter_count >= 3:
+        # Determine highest reached tier
+        possible_tiers = [t for t in SCATTER_MULTIPLIERS if t <= scatter_count]
+        if possible_tiers:
+            multiplier = SCATTER_MULTIPLIERS[max(possible_tiers)]
+            scatter_winnings = multiplier * (lines * bet)
+
+    return total_winnings + scatter_winnings, winning_lines, scatter_winnings, scatter_count
