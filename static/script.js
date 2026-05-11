@@ -201,18 +201,19 @@ function updateUI(data) {
     balanceDisplay.textContent = `$${currentBalance}`;
 
     // Reset indicators
-    indicators.forEach(ind => ind.classList.remove('active'));
+    // (Handled in handleSpin for immediate feedback, but kept here for safety)
+    indicators.forEach(ind => ind.classList.remove('active')); 
 
     // Update Grid
-    grid.innerHTML = '';
-    data.spin_result.forEach((row, rowIndex) => {
-        row.forEach((symbol, colIndex) => {
-            const cell = document.createElement('div');
-            cell.className = 'slot-cell';
-            cell.textContent = symbol;
-            
-            // Highlight winning lines if necessary (basic implementation)
-            grid.appendChild(cell);
+    let cellIndex = 0;
+    data.spin_result.forEach(row => {
+        row.forEach(symbol => {
+            const cell = grid.children[cellIndex];
+            if (cell) {
+                cell.textContent = symbol;
+                cell.setAttribute('data-symbol', symbol);
+            }
+            cellIndex++;
         });
     });
 
@@ -312,10 +313,17 @@ async function handleSpin() {
     const lines = parseInt(document.getElementById('lines-input').value);
     const bet = parseInt(document.getElementById('bet-input').value);
     const messageArea = document.getElementById('message-area');
+    const spinBtn = document.getElementById('spin-button');
 
-    // Reset UI state for new spin
+    // Immediate UI reset and button disable to prevent double-clicks
+    spinBtn.disabled = true;
+    spinBtn.style.opacity = "0.5";
     messageArea.innerHTML = "Spinning...";
     messageArea.className = "mt-6 text-center font-medium text-gray-500";
+
+    const indicators = document.querySelectorAll('.line-indicator');
+    indicators.forEach(ind => ind.classList.remove('active'));
+
     Array.from(document.getElementById('slot-grid').children).forEach(cell => {
         cell.classList.remove('dimmed-cell', 'winning-cell', 'scatter-win');
     });
@@ -346,6 +354,9 @@ async function handleSpin() {
         }
     } catch (error) {
         messageArea.textContent = '❌ Connection Error';
+    } finally {
+        spinBtn.disabled = false;
+        spinBtn.style.opacity = "1";
     }
 }
 
