@@ -1,6 +1,6 @@
 import random
 
-from slot_machine.constants import SYMBOLS_AND_COUNT, WINNING_LINES, SYMBOLS_AND_MULTIPLIERS, WILD_SYMBOL, SCATTER_SYMBOL, SCATTER_MULTIPLIERS
+from slot_machine.constants import SYMBOLS_AND_COUNT, WINNING_LINES, SYMBOLS_AND_MULTIPLIERS, WILD_SYMBOL, SCATTER_SYMBOL, SCATTER_MULTIPLIERS, BONUS_SYMBOL
 
 
 def _get_all_available_symbols() -> list[str]:
@@ -18,20 +18,26 @@ def _get_all_available_symbols() -> list[str]:
 def generate_random_reels_in_spin(rows: int, reels: int) -> list[list[str]]:
     """Randomly pick symbols for each reel in a spin.
 
-    :param rows: Number of rows in a spin.
-    :param reels: Number of reels in a spin.
+    :param rows: Number of rows in a spin (height of each reel).
+    :param reels: Number of reels in a spin (width of the grid).
     :return: A list of lists, where each inner list represents a reel (column) of symbols.
     """
     all_symbols = _get_all_available_symbols()
     all_reels = []
-    for _ in range(reels):
+    for reel_idx in range(reels): # Correctly define reel_idx here
         reel = []
         current_symbols = all_symbols[:]
         for _ in range(rows):
-            value = random.choice(current_symbols)
+            # Filter symbols based on reel index for BONUS_SYMBOL
+            available_for_this_reel = current_symbols[:]
+            if reel_idx == 0 or reel_idx == reels - 1: # First or last reel (index 0 or 4)
+                available_for_this_reel = [s for s in available_for_this_reel if s != BONUS_SYMBOL]
+            
+            # If no symbols are available after filtering, fall back to all symbols (shouldn't happen with balanced counts)
+            value = random.choice(available_for_this_reel if available_for_this_reel else current_symbols)
             reel.append(value)
-            # Scatters appear once per reel; Wilds and others are unrestricted
-            if value == SCATTER_SYMBOL:
+            # Enforce "once per reel" for SCATTER_SYMBOL and BONUS_SYMBOL
+            if value == SCATTER_SYMBOL or value == BONUS_SYMBOL:
                 current_symbols = [s for s in current_symbols if s != value]
             else:
                 current_symbols.remove(value)
@@ -62,7 +68,7 @@ def convert_reels_to_rows(reels: list) -> list[list[str]]:
 
     return rows
 
-def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> tuple[int, dict[int, int], int, int, list[list[int]]]:
+def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> tuple[int, dict[int, int], int, int, list[list[int]], bool, int]:
     """Check for winning combinations in the transposed spin and calculates winnings.
 
     :param transposed_spin: A list of lists representing the rows of the slot machine.
@@ -74,6 +80,8 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
             - Total scatter winnings (int).
             - Total scatter symbols found (int).
             - Coordinates of found scatter symbols [[row, col], ...].
+            - Flag indicating if bonus game is triggered (bool).
+            - Total bonus symbols found (int).
     """
     total_winnings = 0
     winning_lines = {}
@@ -86,7 +94,7 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
         line_symbols = [transposed_spin[r][c] for r, c in positions]
         target_symbol = None
         for s in line_symbols:
-            if s != WILD_SYMBOL and s != SCATTER_SYMBOL:
+            if s != WILD_SYMBOL and s != SCATTER_SYMBOL and s != BONUS_SYMBOL: # Exclude Bonus Symbol from target determination
                 target_symbol = s
                 break
         
@@ -121,4 +129,13 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
             multiplier = SCATTER_MULTIPLIERS[max(possible_tiers)]
             scatter_winnings = multiplier * (lines * bet)
 
-    return total_winnings + scatter_winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions
+    # Bonus Logic: Check for BONUS_SYMBOL anywhere on the grid
+    bonus_symbols_found = 0
+    for r, row in enumerate(transposed_spin):
+        for c, symbol in enumerate(row):
+            if symbol == BONUS_SYMBOL:
+                bonus_symbols_found += 1
+    
+    bonus_triggered = bonus_symbols_found >= 3
+
+    return total_winnings + scatter_winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions, bonus_triggered, bonus_symbols_found

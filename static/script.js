@@ -4,6 +4,7 @@ let reelsCount = 3; // Fallback value
 let maxLines = 10;
 let maxBet = 10;
 let multipliersConfig = {};
+let bonusSymbol = '';
 let scatterSymbol = '';
 
 async function initGame() {
@@ -15,6 +16,7 @@ async function initGame() {
         winningLinesMap = config.winning_lines_config;
         reelsCount = config.reels;
         scatterSymbol = config.scatter_symbol;
+        bonusSymbol = config.bonus_symbol;
         maxLines = config.max_lines;
         maxBet = config.max_bet;
         multipliersConfig = config.multipliers;
@@ -45,15 +47,20 @@ async function initGame() {
         for (let c = 0; c < config.reels; c++) {
             let pool = [...config.symbols];
             for (let r = 0; r < config.rows; r++) {
-                let idx = Math.floor(Math.random() * pool.length);
-                let symbol = pool[idx];
+                let availablePool = [...pool];
+                // Enforce reels 2, 3, 4 rule for Bonus symbols
+                if (c === 0 || c === config.reels - 1) {
+                    availablePool = availablePool.filter(s => s !== bonusSymbol);
+                }
+                let idx = Math.floor(Math.random() * availablePool.length);
+                let symbol = availablePool[idx];
                 initialGrid[r][c] = symbol;
                 
                 // Remove special symbols entirely from the pool for this reel
-                if (symbol === scatterSymbol || symbol === "🌟") {
+                if (symbol === scatterSymbol || symbol === "🌟" || symbol === bonusSymbol) {
                     pool = pool.filter(s => s !== symbol);
                 } else {
-                    pool.splice(idx, 1);
+                    pool.splice(pool.indexOf(symbol), 1);
                 }
             }
         }
@@ -109,6 +116,15 @@ function populateInfoModal(config) {
         div.onclick = () => updatePaylinePreview(i.toString()); // API uses string keys
         paylinesList.appendChild(div);
     }
+
+    // Add Bonus row to the payout table manually
+    const bonusRow = [config.bonus_symbol, "N/A", "N/A", "Triggers Bonus!"];
+    bonusRow.forEach(text => {
+        const div = document.createElement('div');
+        div.className = "p-2 border-b border-purple-50 font-bold text-purple-700 bg-purple-50/50";
+        div.textContent = text;
+        payoutTable.appendChild(div);
+    });
     
     // Add Scatter row to the payout table manually
     const scatterRow = [
@@ -130,6 +146,7 @@ function populateInfoModal(config) {
         <div class="space-y-2">
             <p>🌟 <strong>Wild Symbol:</strong> Substitutes for any standard symbol. A line of pure Wilds pays the highest multiplier.</p>
             <p>💎 <strong>Scatter Symbol:</strong> 3+ symbols anywhere on the grid award a multiplier of your <strong>Total Bet</strong> (indicated by * in the table).</p>
+            <p>🎁 <strong>Bonus Symbol:</strong> Appears only on reels 2, 3, and 4. 3+ symbols trigger a mini-game for mystery prizes!</p>
             <p>ℹ️ Wins are calculated from left to right on active paylines.</p>
         </div>
     `;
