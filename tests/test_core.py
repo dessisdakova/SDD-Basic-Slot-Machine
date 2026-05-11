@@ -1,4 +1,4 @@
-from slot_machine.constants import SYMBOLS_AND_COUNT, ROWS, REELS, WILD_SYMBOL
+from slot_machine.constants import SYMBOLS_AND_COUNT, ROWS, REELS, WILD_SYMBOL, SCATTER_SYMBOL
 from slot_machine.core import _get_all_available_symbols, generate_random_reels_in_spin, convert_reels_to_rows, \
     check_winning_combinations
 
@@ -49,7 +49,7 @@ def test_check_winning_combinations_1st_to_3rd_lines():
     bet = 10
     lines = 5
 
-    winnings, winning_lines = check_winning_combinations(mock_spin, lines, bet)
+    winnings, winning_lines, _, _ = check_winning_combinations(mock_spin, lines, bet)
 
     # ♦(5x)=15, ♥(5x)=30, ♠(5x)=50 -> (15+30+50)*10 = 950
     assert winnings == 950
@@ -66,7 +66,7 @@ def test_check_winning_combinations_4rd_5th_lines():
     bet = 10
     lines = 5
 
-    winnings, winning_lines = check_winning_combinations(mock_spin, lines, bet)
+    winnings, winning_lines, _, _ = check_winning_combinations(mock_spin, lines, bet)
 
     # ♣(5x)=8. Two lines win: 8*10 + 8*10 = 160
     assert winnings == 160
@@ -84,7 +84,7 @@ def test_check_winning_combinations_with_wilds_completing_lines():
     bet = 10
     lines = 3
 
-    winnings, winning_lines = check_winning_combinations(mock_spin, lines, bet)
+    winnings, winning_lines, _, _ = check_winning_combinations(mock_spin, lines, bet)
 
     # Line 1: ♠(5x)=50 * 10 = 500
     # Line 2: ♠(5x)=50 * 10 = 500 (Defaults to ♠ for pure Wilds)
@@ -102,9 +102,25 @@ def test_check_winning_combinations_wild_interruption():
     bet = 1
     lines = 1
 
-    winnings, winning_lines = check_winning_combinations(mock_spin, lines, bet)
+    winnings, winning_lines, _, _ = check_winning_combinations(mock_spin, lines, bet)
 
     # Target is ♣. Match count: 3.
     # ♣(3x)=2 * 1 = 2
     assert winnings == 2
     assert winning_lines == {1: 3}
+
+def test_check_winning_combinations_with_scatters():
+    # 3 Scatters found (💎)
+    mock_spin = [
+        ["💎", "♠", "♥", "♦", "♣"],
+        ["♠", "💎", "♥", "♦", "♣"],
+        ["♠", "♥", "💎", "♦", "♣"]
+    ]
+    bet = 10
+    lines = 10
+    # Total bet = 10 * 10 = 100. Scatter tier 3 = 2x Total Bet = 200.
+
+    winnings, winning_lines, scatter_winnings, scatter_count = check_winning_combinations(mock_spin, lines, bet)
+
+    assert scatter_count == 3
+    assert scatter_winnings == 200
