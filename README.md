@@ -3,7 +3,7 @@
 This project is a sophisticated slot machine game built to demonstrate **Specs-Driven Development (SDD)** and **AI-assisted engineering**.
 
 ### Origins & Evolution
-The core logic was initially inspired by a [YouTube tutorial](https://www.youtube.com/watch?v=th4OBktqK1I) by Tim Ruscica ([Tech With Tim](https://www.youtube.com/c/TechWithTim)). Since the original implementation, this project has been significantly evolved and improved using **VS Code** and the **Gemini Code Assist** plugin to transition from a CLI script to a production-grade modular web application.
+The core logic was initially inspired by a [YouTube tutorial](https://www.youtube.com/watch?v=th4OBktqK1I) by Tim Ruscica ([Tech With Tim](https://www.youtube.com/c/TechWithTim)). Since the original implementation, this project has been significantly evolved and improved using **VS Code** and the **Gemini Code Assist** plugin to transition from a CLI script to a modular web application.
 
 ### Key Features
 - **Specs-Driven Methodology:** Every feature is defined in the `specs/` directory before implementation.
