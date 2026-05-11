@@ -91,6 +91,15 @@ function populateInfoModal(config) {
         paylinesList.appendChild(div);
     }
 
+    // Add Special Symbols Section
+    const specialSection = document.createElement('section');
+    specialSection.className = "mt-6 pt-4 border-t border-gray-100";
+    specialSection.innerHTML = `
+        <h3 class="text-lg font-semibold text-purple-700 mb-2">Special Symbols</h3>
+        <p class="text-sm text-gray-600">🌟 <strong>Wild Symbol:</strong> Substitutes for any symbol to form the highest possible winning combination on a payline.</p>
+    `;
+    document.querySelector('#info-modal .space-y-6').appendChild(specialSection);
+
     // Default preview to Line 1
     updatePaylinePreview(1);
 }
