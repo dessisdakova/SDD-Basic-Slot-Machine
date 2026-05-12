@@ -6,6 +6,7 @@ let maxBet = 10;
 let multipliersConfig = {};
 let bonusSymbol = '';
 let scatterSymbol = '';
+let bonusMiniGamePrizes = {};
 
 async function initGame() {
     try {
@@ -20,6 +21,7 @@ async function initGame() {
         maxLines = config.max_lines;
         maxBet = config.max_bet;
         multipliersConfig = config.multipliers;
+        bonusMiniGamePrizes = config.bonus_mini_game_prizes || {};
         document.getElementById('max-lines-label').textContent = maxLines;
         document.getElementById('max-bet-label').textContent = maxBet;
         
@@ -40,7 +42,6 @@ async function initGame() {
 
         // Populate initial random symbols
         const grid = document.getElementById('slot-grid');
-        grid.innerHTML = '';
         
         // Generate initial symbols reel by reel to enforce "once per reel" rule
         let initialGrid = Array.from({ length: config.rows }, () => []);
@@ -52,15 +53,15 @@ async function initGame() {
                 if (c === 0 || c === config.reels - 1) {
                     availablePool = availablePool.filter(s => s !== bonusSymbol);
                 }
-                let idx = Math.floor(Math.random() * availablePool.length);
-                let symbol = availablePool[idx];
+                let idx = Math.floor(Math.random() * availablePool.length); // Choose from filtered pool
+                let symbol = availablePool[idx]; 
                 initialGrid[r][c] = symbol;
                 
                 // Remove special symbols entirely from the pool for this reel
-                if (symbol === scatterSymbol || symbol === "🌟" || symbol === bonusSymbol) {
+                if (symbol === scatterSymbol || symbol === "🌟" || symbol === bonusSymbol) { // If chosen symbol is special
                     pool = pool.filter(s => s !== symbol);
                 } else {
-                    pool.splice(pool.indexOf(symbol), 1);
+                    pool.splice(pool.indexOf(symbol), 1); // For regular symbols, remove only one instance
                 }
             }
         }
@@ -69,11 +70,13 @@ async function initGame() {
             const cell = document.createElement('div');
             cell.className = 'slot-cell';
             cell.textContent = symbol;
+            cell.setAttribute('data-symbol', symbol); // Set data-symbol for reliable comparison
             grid.appendChild(cell);
         });
 
         // Populate info modal content
         populateInfoModal(config);
+        validateInGameInput();
     } catch (error) {
         console.error('Failed to load configuration', error);
     }
@@ -116,15 +119,6 @@ function populateInfoModal(config) {
         div.onclick = () => updatePaylinePreview(i.toString()); // API uses string keys
         paylinesList.appendChild(div);
     }
-
-    // Add Bonus row to the payout table manually
-    const bonusRow = [config.bonus_symbol, "N/A", "N/A", "Triggers Bonus!"];
-    bonusRow.forEach(text => {
-        const div = document.createElement('div');
-        div.className = "p-2 border-b border-purple-50 font-bold text-purple-700 bg-purple-50/50";
-        div.textContent = text;
-        payoutTable.appendChild(div);
-    });
     
     // Add Scatter row to the payout table manually
     const scatterRow = [
@@ -146,7 +140,7 @@ function populateInfoModal(config) {
         <div class="space-y-2">
             <p>🌟 <strong>Wild Symbol:</strong> Substitutes for any standard symbol. A line of pure Wilds pays the highest multiplier.</p>
             <p>💎 <strong>Scatter Symbol:</strong> 3+ symbols anywhere on the grid award a multiplier of your <strong>Total Bet</strong> (indicated by * in the table).</p>
-            <p>🎁 <strong>Bonus Symbol:</strong> Appears only on reels 2, 3, and 4. 3+ symbols trigger a mini-game for mystery prizes!</p>
+            <p>🎁 <strong>Bonus Symbol:</strong> 3 symbols on reels 2, 3, and 4 trigger an interactive "Pick-a-Prize" mini-game with mystery multipliers - x10, x25, and x200!</p>
             <p>ℹ️ Wins are calculated from left to right on active paylines.</p>
         </div>
     `;
@@ -194,6 +188,7 @@ function updateUI(data) {
     const grid = document.getElementById('slot-grid');
     const balanceDisplay = document.getElementById('balance-display');
     const messageArea = document.getElementById('message-area');
+    const winDisplay = document.getElementById('win-display');
     const indicators = document.querySelectorAll('.line-indicator');
 
     // Update Balance
@@ -256,20 +251,101 @@ function updateUI(data) {
                 }
             });
         }
+
+        // Highlight bonus symbols
+        if (data.bonus_triggered) {
+            data.bonus_positions.forEach(([row, col]) => {
+                const gridIndex = row * reelsCount + col;
+                const cell = grid.children[gridIndex];
+                if (cell) {
+                    cell.classList.remove('dimmed-cell');
+                    cell.classList.add('bonus-win', 'animate-pulse');
+                }
+            });
+        }
     }
 
     // Show Result Message
     if (data.winnings > 0) {
         let winMsg = `🎉 You won $${data.winnings}!`;
+        if (data.bonus_triggered) {
+            winMsg = `🎁 BONUS TRIGGERED! <br>` + winMsg;
+        }
         if (data.scatter_winnings > 0) {
             winMsg += `<br><span class="text-sm text-purple-600 font-bold">💎 Scatter Win: ${data.scatter_count} Diamonds won $${data.scatter_winnings}!</span>`;
         }
-        messageArea.innerHTML = winMsg;
-        messageArea.className = 'mt-6 text-center font-bold text-green-600 animate-bounce';
+        winDisplay.innerHTML = winMsg;
+        winDisplay.className = 'text-center font-bold text-green-600 animate-bounce mb-4 min-h-[4rem] flex flex-col justify-center';
+        messageArea.innerHTML = ''; // Clear status message
     } else {
-        messageArea.innerHTML = 'Better luck next time!';
-        messageArea.className = 'mt-6 text-center font-medium text-gray-500';
+        winDisplay.innerHTML = 'Better luck next time!';
+        winDisplay.className = 'text-center font-medium text-gray-500 mb-4 min-h-[4rem] flex flex-col justify-center';
+        messageArea.innerHTML = '';
     }
+
+    // Handle Bonus Game Trigger
+    if (data.bonus_triggered) {
+        setTimeout(() => {
+            startBonusMiniGame(data.total_bet);
+        }, 1500);
+    }
+}
+
+function startBonusMiniGame(totalBet) {
+    // Create overlay dynamically since we can't edit index.html
+    const overlay = document.createElement('div');
+    overlay.id = 'bonus-game-overlay';
+    overlay.className = 'fixed inset-0 bg-purple-900/90 flex flex-col items-center justify-center z-50 p-4';
+    
+    overlay.innerHTML = `
+        <h2 class="text-4xl font-black text-white mb-2 animate-bounce">🎁 BONUS ROUND 🎁</h2>
+        <p class="text-purple-200 mb-8 text-lg text-center">Pick a Mystery Chest to reveal your multiplier!</p>
+        <div class="flex gap-6">
+            ${[1, 2, 3].map(i => `
+                <div class="bonus-chest w-32 h-32 bg-yellow-500 rounded-xl border-4 border-yellow-300 flex items-center justify-center text-6xl cursor-pointer hover:scale-110 transition-transform shadow-2xl" onclick="resolveBonus(this, ${totalBet})">
+                    🎁
+                </div>
+            `).join('')}
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function resolveBonus(element, totalBet) {
+    // Prevent multiple clicks
+    const chests = document.querySelectorAll('.bonus-chest');
+    chests.forEach(c => c.onclick = null);
+
+    // Logic to pick a prize from the pool
+    let prizes = Object.values(bonusMiniGamePrizes || {});
+    
+    // Safety fallback if configuration is missing or empty
+    if (prizes.length === 0) {
+        prizes = [10, 25, 200];
+    }
+
+    const multiplier = prizes[Math.floor(Math.random() * prizes.length)];
+    const winAmount = multiplier * totalBet;
+
+    element.innerHTML = `<span class="text-2xl font-bold text-white">${multiplier}x</span>`;
+    element.classList.add('bg-green-500', 'border-green-300');
+
+    const winAnnouncement = document.createElement('div');
+    winAnnouncement.className = 'mt-12 text-3xl font-bold text-yellow-400 animate-pulse text-center';
+    winAnnouncement.innerHTML = `AMAZING!<br>You found a $${winAmount} Prize!`;
+    document.getElementById('bonus-game-overlay').appendChild(winAnnouncement);
+
+    // Update local balance
+    currentBalance += winAmount;
+    document.getElementById('balance-display').textContent = `$${currentBalance}`;
+
+    // Close after delay
+    setTimeout(() => {
+        const overlay = document.getElementById('bonus-game-overlay');
+        overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.remove(), 500);
+        document.getElementById('win-display').innerHTML += `<br><span class="text-purple-700 font-bold">🎁 Bonus Game won $${winAmount}!</span>`;
+    }, 2500);
 }
 
 function handleDeposit() {
@@ -282,6 +358,7 @@ function handleDeposit() {
         document.getElementById('deposit-overlay').classList.add('hidden');
         document.getElementById('deposit-overlay').classList.remove('flex');
         document.getElementById('message-area').textContent = "Ready to play!";
+        document.getElementById('win-display').innerHTML = "";
     }
 }
 
@@ -306,19 +383,25 @@ function handlePlayAgain() {
     document.getElementById('deposit-overlay').classList.add('flex');
     document.querySelector('.bg-white.p-8').classList.remove('hidden'); // Show game content again
     document.getElementById('message-area').textContent = ""; // Clear previous messages
+    document.getElementById('win-display').innerHTML = "";
 }
 
 async function handleSpin() {
     const lines = parseInt(document.getElementById('lines-input').value);
     const bet = parseInt(document.getElementById('bet-input').value);
     const messageArea = document.getElementById('message-area');
+    const spinBtn = document.getElementById('spin-button');
+    const winDisplay = document.getElementById('win-display');
 
-    // Reset UI state for new spin
+    // Immediate UI reset and button disable to prevent double-clicks
+    spinBtn.disabled = true;
+    spinBtn.style.opacity = "0.5";
     messageArea.innerHTML = "Spinning...";
     messageArea.className = "mt-6 text-center font-medium text-gray-500";
-    Array.from(document.getElementById('slot-grid').children).forEach(cell => {
-        cell.classList.remove('dimmed-cell', 'winning-cell', 'scatter-win');
-    });
+    winDisplay.innerHTML = "";
+
+    const indicators = document.querySelectorAll('.line-indicator');
+    indicators.forEach(ind => ind.classList.remove('active'));
 
     try {
         const response = await fetch('/game/spin', {
@@ -346,6 +429,12 @@ async function handleSpin() {
         }
     } catch (error) {
         messageArea.textContent = '❌ Connection Error';
+    } finally {
+        // Re-enable the spin button after a 2-second delay
+        setTimeout(() => {
+            spinBtn.disabled = false;
+            spinBtn.style.opacity = "1";
+        }, 1200); // 1200 milliseconds = 1.2 seconds
     }
 }
 
@@ -374,7 +463,7 @@ document.getElementById('deposit-input').addEventListener('input', (e) => {
     err.classList.toggle('hidden', isValid);
 });
 
-const validateInGameInput = () => {
+function validateInGameInput() {
     const linesInput = document.getElementById('lines-input');
     const betInput = document.getElementById('bet-input');
     const spinBtn = document.getElementById('spin-button');
@@ -393,11 +482,19 @@ const validateInGameInput = () => {
     betInput.classList.toggle('border-red-500', !betValid);
     document.getElementById('bet-error').classList.toggle('hidden', betValid);
     
+    // Update Total Bet Display
+    const totalBetDisplay = document.getElementById('total-bet-display');
+    if (linesValid && betValid) {
+        totalBetDisplay.textContent = linesVal * betVal;
+    } else {
+        totalBetDisplay.textContent = "--";
+    }
+
     // Spin Button state
     const allValid = linesValid && betValid;
     spinBtn.disabled = !allValid;
     spinBtn.style.opacity = allValid ? "1" : "0.5";
-};
+}
 
 document.getElementById('lines-input').addEventListener('input', validateInGameInput);
 document.getElementById('bet-input').addEventListener('input', validateInGameInput);
