@@ -7,6 +7,7 @@ let multipliersConfig = {};
 let bonusSymbol = '';
 let scatterSymbol = '';
 let bonusMiniGamePrizes = {};
+let freeSpinsRemaining = 0;
 
 async function initGame() {
     try {
@@ -58,7 +59,7 @@ async function initGame() {
                 initialGrid[r][c] = symbol;
                 
                 // Remove special symbols entirely from the pool for this reel
-                if (symbol === scatterSymbol || symbol === "🌟" || symbol === bonusSymbol) { // If chosen symbol is special
+                if (symbol === scatterSymbol || symbol === bonusSymbol) { // If chosen symbol is special
                     pool = pool.filter(s => s !== symbol);
                 } else {
                     pool.splice(pool.indexOf(symbol), 1); // For regular symbols, remove only one instance
@@ -141,6 +142,7 @@ function populateInfoModal(config) {
             <p>🌟 <strong>Wild Symbol:</strong> Substitutes for any standard symbol. A line of pure Wilds pays the highest multiplier.</p>
             <p>💎 <strong>Scatter Symbol:</strong> 3+ symbols anywhere on the grid award a multiplier of your <strong>Total Bet</strong> (indicated by * in the table).</p>
             <p>🎁 <strong>Bonus Symbol:</strong> 3 symbols on reels 2, 3, and 4 trigger an interactive "Pick-a-Prize" mini-game with mystery multipliers - x10, x25, and x200!</p>
+            <p>🔄 <strong>Free Spins:</strong> Land 3+ 🌟 Wild symbols anywhere on the grid to trigger free spins!</p>
             <p>ℹ️ Wins are calculated from left to right on active paylines.</p>
         </div>
     `;
@@ -194,6 +196,20 @@ function updateUI(data) {
     // Update Balance
     currentBalance = data.new_balance;
     balanceDisplay.textContent = `$${currentBalance}`;
+
+    // Handle Free Spins Award
+    if (data.free_spins_won > 0) {
+        freeSpinsRemaining += data.free_spins_won;
+    }
+
+    const fsBanner = document.getElementById('free-spins-banner');
+    const fsCount = document.getElementById('free-spins-count');
+    if (freeSpinsRemaining > 0) {
+        fsBanner.classList.remove('hidden');
+        fsCount.textContent = freeSpinsRemaining;
+    } else {
+        fsBanner.classList.add('hidden');
+    }
 
     // Reset indicators
     indicators.forEach(ind => ind.classList.remove('active'));
@@ -274,6 +290,9 @@ function updateUI(data) {
         if (data.scatter_winnings > 0) {
             winMsg += `<br><span class="text-sm text-purple-600 font-bold">💎 Scatter Win: ${data.scatter_count} Diamonds won $${data.scatter_winnings}!</span>`;
         }
+        if (data.free_spins_won > 0) {
+            winMsg += `<br><span class="text-sm text-orange-600 font-bold">🔄 ${data.free_spins_won} FREE SPINS AWARDED!</span>`;
+        }
         winDisplay.innerHTML = winMsg;
         winDisplay.className = 'text-center font-bold text-green-600 animate-bounce mb-4 min-h-[4rem] flex flex-col justify-center';
         messageArea.innerHTML = ''; // Clear status message
@@ -288,6 +307,13 @@ function updateUI(data) {
         setTimeout(() => {
             startBonusMiniGame(data.total_bet);
         }, 1500);
+    }
+
+    // If we have free spins left, trigger next spin automatically
+    if (freeSpinsRemaining > 0 && !data.bonus_triggered) {
+        setTimeout(() => {
+            handleSpin(true);
+        }, 2000);
     }
 }
 
@@ -345,6 +371,13 @@ function resolveBonus(element, totalBet) {
         overlay.classList.add('opacity-0');
         setTimeout(() => overlay.remove(), 500);
         document.getElementById('win-display').innerHTML += `<br><span class="text-purple-700 font-bold">🎁 Bonus Game won $${winAmount}!</span>`;
+        
+        // After bonus is resolved, check if free spins should continue
+        if (freeSpinsRemaining > 0) {
+            setTimeout(() => {
+                handleSpin(true);
+            }, 1000);
+        }
     }, 2500);
 }
 
@@ -386,12 +419,15 @@ function handlePlayAgain() {
     document.getElementById('win-display').innerHTML = "";
 }
 
-async function handleSpin() {
+async function handleSpin(isFree = false) {
     const lines = parseInt(document.getElementById('lines-input').value);
     const bet = parseInt(document.getElementById('bet-input').value);
     const messageArea = document.getElementById('message-area');
     const spinBtn = document.getElementById('spin-button');
     const winDisplay = document.getElementById('win-display');
+
+    if (isFree && freeSpinsRemaining > 0) freeSpinsRemaining--;
+    document.getElementById('free-spins-count').textContent = freeSpinsRemaining;
 
     // Immediate UI reset and button disable to prevent double-clicks
     spinBtn.disabled = true;
@@ -407,7 +443,7 @@ async function handleSpin() {
         const response = await fetch('/game/spin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ balance: currentBalance, lines, bet })
+            body: JSON.stringify({ balance: currentBalance, lines, bet, is_free_spin: isFree })
         });
 
         const data = await response.json();
@@ -432,13 +468,15 @@ async function handleSpin() {
     } finally {
         // Re-enable the spin button after a 2-second delay
         setTimeout(() => {
-            spinBtn.disabled = false;
-            spinBtn.style.opacity = "1";
+            // spinBtn.disabled = false;
+            // spinBtn.style.opacity = "1";
+            validateInGameInput();
         }, 1200); // 1200 milliseconds = 1.2 seconds
     }
 }
 
-document.getElementById('spin-button').addEventListener('click', handleSpin);
+// document.getElementById('spin-button').addEventListener('click', handleSpin);
+document.getElementById('spin-button').addEventListener('click', () => handleSpin(false));
 document.getElementById('deposit-button').addEventListener('click', handleDeposit);
 document.getElementById('cashout-button').addEventListener('click', handleCashout); // Keep this for the button in the main UI
 document.getElementById('play-again-button').addEventListener('click', handlePlayAgain);

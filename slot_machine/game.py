@@ -3,19 +3,20 @@ from slot_machine.core import generate_random_reels_in_spin, convert_reels_to_ro
 from slot_machine.utils import compare_total_bet_and_balance, print_spin, print_winnings, get_deposit
 
 
-def execute_spin(balance: int, lines: int, bet: int) -> dict:
+def execute_spin(balance: int, lines: int, bet: int, is_free_spin: bool = False) -> dict:
     """Logic-only execution of a spin, returning results as a dictionary.
     
     This allows the same logic to be used by both CLI and Web API.
     """
     total_bet = lines * bet
-    if total_bet > balance:
+    if not is_free_spin and total_bet > balance:
         raise ValueError("Insufficient balance for this bet.")
 
     spin_reels = generate_random_reels_in_spin(ROWS, REELS)
     transposed_spin = convert_reels_to_rows(spin_reels)
-    # check_winning_combinations now returns 7 values to support Phase 6 Bonus mechanics
-    winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions, bonus_triggered, bonus_positions = \
+    # check_winning_combinations now returns 8 values to support Phase 7 Free Spins
+    winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions, \
+    bonus_triggered, bonus_positions, free_spins_won = \
         check_winning_combinations(transposed_spin, lines, bet)
 
     return {
@@ -26,9 +27,11 @@ def execute_spin(balance: int, lines: int, bet: int) -> dict:
         "scatter_count": scatter_count,
         "scatter_positions": scatter_positions,
         "total_bet": total_bet,
-        "new_balance": balance - total_bet + winnings,
+        "new_balance": balance + winnings if is_free_spin else balance - total_bet + winnings,
         "bonus_triggered": bonus_triggered,
-        "bonus_positions": bonus_positions
+        "bonus_positions": bonus_positions,
+        "free_spins_won": free_spins_won,
+        "is_free_spin": is_free_spin
     }
 
 def spin(balance: int) -> int:

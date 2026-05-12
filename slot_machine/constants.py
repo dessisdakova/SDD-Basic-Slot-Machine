@@ -15,9 +15,9 @@ SYMBOLS_AND_COUNT = {
     "♥": 5,
     "♦": 12,
     "♣": 20,
-    WILD_SYMBOL: 2,
+    WILD_SYMBOL: 5,
     SCATTER_SYMBOL: 2,
-    BONUS_SYMBOL: 5
+    BONUS_SYMBOL: 2
 }
 
 WINNING_LINES = {
@@ -54,4 +54,9 @@ BONUS_MINI_GAME_PRIZES = {
     "10x": 10,
     "25x": 25,
     "200x": 200
+}
+
+FREE_SPINS_CONFIG = {
+    3: 5, 4: 7, 5: 9, 6: 11, 7: 13, 8: 15, 9: 17, 10: 19,
+    11: 21, 12: 23, 13: 25, 14: 30, 15: 50
 }

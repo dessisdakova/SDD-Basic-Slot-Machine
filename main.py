@@ -22,6 +22,7 @@ class SpinRequest(BaseModel):
     balance: int = Field(..., gt=0, description="The current player balance")
     lines: int = Field(..., ge=1, le=MAX_LINES, description="Number of lines to bet on")
     bet: int = Field(..., ge=MIN_BET, le=MAX_BET, description="Bet amount per line")
+    is_free_spin: bool = Field(default=False, description="Whether this is a free spin")
 
 @app.get("/game/configuration")
 async def get_configuration():
@@ -49,7 +50,8 @@ async def post_spin(request: SpinRequest):
         result = execute_spin(
             balance=request.balance, 
             lines=request.lines, 
-            bet=request.bet
+            bet=request.bet,
+            is_free_spin=request.is_free_spin
         )
         return result
     except ValueError as e:
