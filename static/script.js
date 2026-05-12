@@ -422,8 +422,11 @@ async function handleSpin() {
     } catch (error) {
         messageArea.textContent = '❌ Connection Error';
     } finally {
-        spinBtn.disabled = false;
-        spinBtn.style.opacity = "1";
+        // Re-enable the spin button after a 2-second delay
+        setTimeout(() => {
+            spinBtn.disabled = false;
+            spinBtn.style.opacity = "1";
+        }, 1200); // 1200 milliseconds = 1.2 seconds
     }
 }
 
