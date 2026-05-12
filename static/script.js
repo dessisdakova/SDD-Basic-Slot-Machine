@@ -188,6 +188,7 @@ function updateUI(data) {
     const grid = document.getElementById('slot-grid');
     const balanceDisplay = document.getElementById('balance-display');
     const messageArea = document.getElementById('message-area');
+    const winDisplay = document.getElementById('win-display');
     const indicators = document.querySelectorAll('.line-indicator');
 
     // Update Balance
@@ -273,11 +274,13 @@ function updateUI(data) {
         if (data.scatter_winnings > 0) {
             winMsg += `<br><span class="text-sm text-purple-600 font-bold">💎 Scatter Win: ${data.scatter_count} Diamonds won $${data.scatter_winnings}!</span>`;
         }
-        messageArea.innerHTML = winMsg;
-        messageArea.className = 'mt-6 text-center font-bold text-green-600 animate-bounce';
+        winDisplay.innerHTML = winMsg;
+        winDisplay.className = 'text-center font-bold text-green-600 animate-bounce mb-4 min-h-[4rem] flex flex-col justify-center';
+        messageArea.innerHTML = ''; // Clear status message
     } else {
-        messageArea.innerHTML = 'Better luck next time!';
-        messageArea.className = 'mt-6 text-center font-medium text-gray-500';
+        winDisplay.innerHTML = 'Better luck next time!';
+        winDisplay.className = 'text-center font-medium text-gray-500 mb-4 min-h-[4rem] flex flex-col justify-center';
+        messageArea.innerHTML = '';
     }
 
     // Handle Bonus Game Trigger
@@ -341,7 +344,7 @@ function resolveBonus(element, totalBet) {
         const overlay = document.getElementById('bonus-game-overlay');
         overlay.classList.add('opacity-0');
         setTimeout(() => overlay.remove(), 500);
-        document.getElementById('message-area').innerHTML += `<br><span class="text-purple-700 font-bold">🎁 Bonus Game won $${winAmount}!</span>`;
+        document.getElementById('win-display').innerHTML += `<br><span class="text-purple-700 font-bold">🎁 Bonus Game won $${winAmount}!</span>`;
     }, 2500);
 }
 
@@ -355,6 +358,7 @@ function handleDeposit() {
         document.getElementById('deposit-overlay').classList.add('hidden');
         document.getElementById('deposit-overlay').classList.remove('flex');
         document.getElementById('message-area').textContent = "Ready to play!";
+        document.getElementById('win-display').innerHTML = "";
     }
 }
 
@@ -379,6 +383,7 @@ function handlePlayAgain() {
     document.getElementById('deposit-overlay').classList.add('flex');
     document.querySelector('.bg-white.p-8').classList.remove('hidden'); // Show game content again
     document.getElementById('message-area').textContent = ""; // Clear previous messages
+    document.getElementById('win-display').innerHTML = "";
 }
 
 async function handleSpin() {
@@ -386,12 +391,14 @@ async function handleSpin() {
     const bet = parseInt(document.getElementById('bet-input').value);
     const messageArea = document.getElementById('message-area');
     const spinBtn = document.getElementById('spin-button');
+    const winDisplay = document.getElementById('win-display');
 
     // Immediate UI reset and button disable to prevent double-clicks
     spinBtn.disabled = true;
     spinBtn.style.opacity = "0.5";
     messageArea.innerHTML = "Spinning...";
     messageArea.className = "mt-6 text-center font-medium text-gray-500";
+    winDisplay.innerHTML = "";
 
     const indicators = document.querySelectorAll('.line-indicator');
     indicators.forEach(ind => ind.classList.remove('active'));
