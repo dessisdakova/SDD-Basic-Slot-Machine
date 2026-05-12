@@ -7,6 +7,96 @@ let multipliersConfig = {};
 let bonusSymbol = '';
 let scatterSymbol = '';
 let bonusMiniGamePrizes = {};
+let freeSpinsRemaining = 0;
+let highlightSequenceTimeouts = [];
+let lastSpinWildPositions = [];
+const PAYLINE_HIGHLIGHT_BEFORE_FREE_SPIN_MS = 2000;
+
+function clearHighlightSequenceTimeouts() {
+    highlightSequenceTimeouts.forEach((id) => clearTimeout(id));
+    highlightSequenceTimeouts = [];
+}
+
+function scheduleHighlight(fn, delayMs) {
+    const id = setTimeout(fn, delayMs);
+    highlightSequenceTimeouts.push(id);
+}
+
+function applyPhaseOneWinHighlights(grid, data) {
+    const winningLineNumbers = Object.keys(data.winning_lines);
+    const hasPaylineWins = winningLineNumbers.length > 0;
+    const hasScatterWins = data.scatter_winnings > 0;
+
+    if (!hasPaylineWins && !hasScatterWins && !data.bonus_triggered) {
+        return;
+    }
+
+    Array.from(grid.children).forEach((cell) => cell.classList.add('dimmed-cell'));
+
+    if (hasPaylineWins) {
+        Object.entries(data.winning_lines).forEach(([lineNum, count]) => {
+            const indicator = document.getElementById(`line-ind-${lineNum}`);
+            if (indicator) indicator.classList.add('active');
+
+            const coordinates = winningLinesMap[lineNum];
+            coordinates.forEach(([row, col], index) => {
+                const gridIndex = row * reelsCount + col;
+                if (index < count) {
+                    grid.children[gridIndex].classList.remove('dimmed-cell');
+                    grid.children[gridIndex].classList.add('winning-cell');
+                }
+            });
+        });
+    }
+
+    if (hasScatterWins) {
+        data.scatter_positions.forEach(([row, col]) => {
+            const gridIndex = row * reelsCount + col;
+            const cell = grid.children[gridIndex];
+            if (cell) {
+                cell.classList.remove('dimmed-cell');
+                cell.classList.add('scatter-win');
+            }
+        });
+    }
+
+    if (data.bonus_triggered) {
+        data.bonus_positions.forEach(([row, col]) => {
+            const gridIndex = row * reelsCount + col;
+            const cell = grid.children[gridIndex];
+            if (cell) {
+                cell.classList.remove('dimmed-cell');
+                cell.classList.add('bonus-win', 'animate-pulse');
+            }
+        });
+    }
+}
+
+function clearGridHighlightClasses(grid, indicators) {
+    indicators.forEach((ind) => ind.classList.remove('active'));
+    Array.from(grid.children).forEach((cell) => {
+        cell.classList.remove(
+            'dimmed-cell',
+            'winning-cell',
+            'scatter-win',
+            'bonus-win',
+            'free-spin-trigger',
+            'animate-pulse'
+        );
+    });
+}
+
+function applyFreeSpinWildHighlights(grid, wildPositions) {
+    Array.from(grid.children).forEach((cell) => cell.classList.add('dimmed-cell'));
+    wildPositions.forEach(([row, col]) => {
+        const gridIndex = row * reelsCount + col;
+        const cell = grid.children[gridIndex];
+        if (cell) {
+            cell.classList.remove('dimmed-cell');
+            cell.classList.add('free-spin-trigger');
+        }
+    });
+}
 
 async function initGame() {
     try {
@@ -58,7 +148,7 @@ async function initGame() {
                 initialGrid[r][c] = symbol;
                 
                 // Remove special symbols entirely from the pool for this reel
-                if (symbol === scatterSymbol || symbol === "🌟" || symbol === bonusSymbol) { // If chosen symbol is special
+                if (symbol === scatterSymbol || symbol === bonusSymbol) { // If chosen symbol is special
                     pool = pool.filter(s => s !== symbol);
                 } else {
                     pool.splice(pool.indexOf(symbol), 1); // For regular symbols, remove only one instance
@@ -141,6 +231,7 @@ function populateInfoModal(config) {
             <p>🌟 <strong>Wild Symbol:</strong> Substitutes for any standard symbol. A line of pure Wilds pays the highest multiplier.</p>
             <p>💎 <strong>Scatter Symbol:</strong> 3+ symbols anywhere on the grid award a multiplier of your <strong>Total Bet</strong> (indicated by * in the table).</p>
             <p>🎁 <strong>Bonus Symbol:</strong> 3 symbols on reels 2, 3, and 4 trigger an interactive "Pick-a-Prize" mini-game with mystery multipliers - x10, x25, and x200!</p>
+            <p>🔄 <strong>Free Spins:</strong> Land 3+ 🌟 Wild symbols anywhere on the grid to trigger free spins!</p>
             <p>ℹ️ Wins are calculated from left to right on active paylines.</p>
         </div>
     `;
@@ -185,28 +276,37 @@ function toggleInfoModal(show) {
 }
 
 function updateUI(data) {
+    clearHighlightSequenceTimeouts();
     const grid = document.getElementById('slot-grid');
     const balanceDisplay = document.getElementById('balance-display');
     const messageArea = document.getElementById('message-area');
     const winDisplay = document.getElementById('win-display');
     const indicators = document.querySelectorAll('.line-indicator');
 
-    // Update Balance
     currentBalance = data.new_balance;
     balanceDisplay.textContent = `$${currentBalance}`;
 
-    // Reset indicators
-    indicators.forEach(ind => ind.classList.remove('active'));
+    if (data.free_spins_won > 0) {
+        freeSpinsRemaining += data.free_spins_won;
+    }
 
-    // Update Grid
+    const fsBanner = document.getElementById('free-spins-banner');
+    const fsCount = document.getElementById('free-spins-count');
+    if (freeSpinsRemaining > 0) {
+        fsBanner.classList.remove('hidden');
+        fsCount.textContent = freeSpinsRemaining;
+    } else {
+        fsBanner.classList.add('hidden');
+    }
+
+    indicators.forEach((ind) => ind.classList.remove('active'));
+
     grid.innerHTML = '';
-    data.spin_result.forEach((row, rowIndex) => {
-        row.forEach((symbol, colIndex) => {
+    data.spin_result.forEach((row) => {
+        row.forEach((symbol) => {
             const cell = document.createElement('div');
             cell.className = 'slot-cell';
             cell.textContent = symbol;
-            
-            // Highlight winning lines if necessary (basic implementation)
             grid.appendChild(cell);
         });
     });
@@ -214,76 +314,59 @@ function updateUI(data) {
     const winningLineNumbers = Object.keys(data.winning_lines);
     const hasPaylineWins = winningLineNumbers.length > 0;
     const hasScatterWins = data.scatter_winnings > 0;
-    
-    if (hasPaylineWins || hasScatterWins) {
-        // If there are any wins (payline or scatter), dim everything first for visual contrast
-        Array.from(grid.children).forEach(cell => cell.classList.add('dimmed-cell'));
+    const wonFreeSpins = data.free_spins_won > 0;
+    const wildPositions = data.wild_positions || [];
+    lastSpinWildPositions = wonFreeSpins ? wildPositions : [];
 
-        // Highlight winning symbols and indicators for paylines
-        if (hasPaylineWins) {
-            Object.entries(data.winning_lines).forEach(([lineNum, count]) => {
-                // Highlight indicator
-                const indicator = document.getElementById(`line-ind-${lineNum}`);
-                if (indicator) indicator.classList.add('active');
+    const phaseOneContent = hasPaylineWins || hasScatterWins || data.bonus_triggered;
 
-                // Highlight specific symbols in the line
-                const coordinates = winningLinesMap[lineNum];
-                coordinates.forEach(([row, col], index) => {
-                    const gridIndex = row * reelsCount + col;
-                    if (index < count) {
-                        grid.children[gridIndex].classList.remove('dimmed-cell');
-                        grid.children[gridIndex].classList.add('winning-cell');
-                    }
-                });
-            });
+    if (phaseOneContent && wonFreeSpins) {
+        applyPhaseOneWinHighlights(grid, data);
+        // Bonus mini-game must run before free spins (spec); orange wild highlight runs after bonus closes.
+        if (!data.bonus_triggered) {
+            scheduleHighlight(() => {
+                clearGridHighlightClasses(grid, indicators);
+                applyFreeSpinWildHighlights(grid, wildPositions);
+            }, PAYLINE_HIGHLIGHT_BEFORE_FREE_SPIN_MS);
         }
-
-        // Highlight scatter symbols using the same logic as winning lines
-        if (hasScatterWins) {
-            console.log("Scatter win detected! Highlighting positions:", data.scatter_positions); // DEBUG LOG
-            data.scatter_positions.forEach(([row, col]) => {
-                const gridIndex = row * reelsCount + col;
-                const cell = grid.children[gridIndex];
-                if (cell) { // Ensure the cell exists
-                    cell.classList.remove('dimmed-cell');
-                    cell.classList.add('scatter-win');
-                    console.log(`Applied scatter-win to cell at [${row},${col}] (grid index ${gridIndex})`); // DEBUG LOG
-                }
-            });
-        }
-
-        // Highlight bonus symbols
-        if (data.bonus_triggered) {
-            data.bonus_positions.forEach(([row, col]) => {
-                const gridIndex = row * reelsCount + col;
-                const cell = grid.children[gridIndex];
-                if (cell) {
-                    cell.classList.remove('dimmed-cell');
-                    cell.classList.add('bonus-win', 'animate-pulse');
-                }
-            });
-        }
+    } else if (phaseOneContent) {
+        applyPhaseOneWinHighlights(grid, data);
+    } else if (wonFreeSpins) {
+        applyFreeSpinWildHighlights(grid, wildPositions);
     }
 
-    // Show Result Message
-    if (data.winnings > 0) {
-        let winMsg = `🎉 You won $${data.winnings}!`;
+    const pressSpinHint =
+        freeSpinsRemaining > 0
+            ? `<br><span class="text-sm text-orange-700 font-semibold">Press SPIN when you are ready for your free spin${freeSpinsRemaining > 1 ? 's' : ''}.</span>`
+            : '';
+
+    if (data.winnings > 0 || data.free_spins_won > 0) {
+        let winMsg =
+            data.winnings > 0 ? `🎉 You won $${data.winnings}!` : '';
+        if (data.winnings === 0 && data.free_spins_won > 0) {
+            winMsg = '🔄 Free spins awarded!';
+        }
         if (data.bonus_triggered) {
             winMsg = `🎁 BONUS TRIGGERED! <br>` + winMsg;
         }
         if (data.scatter_winnings > 0) {
             winMsg += `<br><span class="text-sm text-purple-600 font-bold">💎 Scatter Win: ${data.scatter_count} Diamonds won $${data.scatter_winnings}!</span>`;
         }
+        if (data.free_spins_won > 0) {
+            winMsg += `<br><span class="text-sm text-orange-600 font-bold">🔄 ${data.free_spins_won} FREE SPINS AWARDED!</span>`;
+        }
+        winMsg += pressSpinHint;
         winDisplay.innerHTML = winMsg;
-        winDisplay.className = 'text-center font-bold text-green-600 animate-bounce mb-4 min-h-[4rem] flex flex-col justify-center';
-        messageArea.innerHTML = ''; // Clear status message
+        winDisplay.className =
+            'text-center font-bold text-green-600 animate-bounce mb-4 min-h-[4rem] flex flex-col justify-center';
+        messageArea.innerHTML = '';
     } else {
-        winDisplay.innerHTML = 'Better luck next time!';
-        winDisplay.className = 'text-center font-medium text-gray-500 mb-4 min-h-[4rem] flex flex-col justify-center';
+        winDisplay.innerHTML = 'Better luck next time!' + pressSpinHint;
+        winDisplay.className =
+            'text-center font-medium text-gray-500 mb-4 min-h-[4rem] flex flex-col justify-center';
         messageArea.innerHTML = '';
     }
 
-    // Handle Bonus Game Trigger
     if (data.bonus_triggered) {
         setTimeout(() => {
             startBonusMiniGame(data.total_bet);
@@ -345,6 +428,15 @@ function resolveBonus(element, totalBet) {
         overlay.classList.add('opacity-0');
         setTimeout(() => overlay.remove(), 500);
         document.getElementById('win-display').innerHTML += `<br><span class="text-purple-700 font-bold">🎁 Bonus Game won $${winAmount}!</span>`;
+        const grid = document.getElementById('slot-grid');
+        const indicators = document.querySelectorAll('.line-indicator');
+        if (freeSpinsRemaining > 0 && lastSpinWildPositions.length > 0) {
+            clearGridHighlightClasses(grid, indicators);
+            applyFreeSpinWildHighlights(grid, lastSpinWildPositions);
+        }
+        if (freeSpinsRemaining > 0) {
+            document.getElementById('win-display').innerHTML += `<br><span class="text-sm text-orange-700 font-semibold">Press SPIN when you are ready for your free spin${freeSpinsRemaining > 1 ? 's' : ''}.</span>`;
+        }
     }, 2500);
 }
 
@@ -386,12 +478,16 @@ function handlePlayAgain() {
     document.getElementById('win-display').innerHTML = "";
 }
 
-async function handleSpin() {
+async function handleSpin(isFree = false) {
+    clearHighlightSequenceTimeouts();
     const lines = parseInt(document.getElementById('lines-input').value);
     const bet = parseInt(document.getElementById('bet-input').value);
     const messageArea = document.getElementById('message-area');
     const spinBtn = document.getElementById('spin-button');
     const winDisplay = document.getElementById('win-display');
+
+    if (isFree && freeSpinsRemaining > 0) freeSpinsRemaining--;
+    document.getElementById('free-spins-count').textContent = freeSpinsRemaining;
 
     // Immediate UI reset and button disable to prevent double-clicks
     spinBtn.disabled = true;
@@ -407,7 +503,7 @@ async function handleSpin() {
         const response = await fetch('/game/spin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ balance: currentBalance, lines, bet })
+            body: JSON.stringify({ balance: currentBalance, lines, bet, is_free_spin: isFree })
         });
 
         const data = await response.json();
@@ -432,13 +528,17 @@ async function handleSpin() {
     } finally {
         // Re-enable the spin button after a 2-second delay
         setTimeout(() => {
-            spinBtn.disabled = false;
-            spinBtn.style.opacity = "1";
+            // spinBtn.disabled = false;
+            // spinBtn.style.opacity = "1";
+            validateInGameInput();
         }, 1200); // 1200 milliseconds = 1.2 seconds
     }
 }
 
-document.getElementById('spin-button').addEventListener('click', handleSpin);
+// document.getElementById('spin-button').addEventListener('click', handleSpin);
+document.getElementById('spin-button').addEventListener('click', () =>
+    handleSpin(freeSpinsRemaining > 0)
+);
 document.getElementById('deposit-button').addEventListener('click', handleDeposit);
 document.getElementById('cashout-button').addEventListener('click', handleCashout); // Keep this for the button in the main UI
 document.getElementById('play-again-button').addEventListener('click', handlePlayAgain);

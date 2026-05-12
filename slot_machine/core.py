@@ -1,6 +1,9 @@
 import random
 
-from slot_machine.constants import SYMBOLS_AND_COUNT, WINNING_LINES, SYMBOLS_AND_MULTIPLIERS, WILD_SYMBOL, SCATTER_SYMBOL, SCATTER_MULTIPLIERS, BONUS_SYMBOL
+from slot_machine.constants import (
+    SYMBOLS_AND_COUNT, WINNING_LINES, SYMBOLS_AND_MULTIPLIERS, 
+    WILD_SYMBOL, SCATTER_SYMBOL, SCATTER_MULTIPLIERS, BONUS_SYMBOL, FREE_SPINS_CONFIG
+)
 
 
 def _get_all_available_symbols() -> list[str]:
@@ -68,7 +71,7 @@ def convert_reels_to_rows(reels: list) -> list[list[str]]:
 
     return rows
 
-def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> tuple[int, dict[int, int], int, int, list[list[int]], bool, list[list[int]]]:
+def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> tuple[int, dict[int, int], int, int, list[list[int]], bool, list[list[int]], int, list[list[int]]]:
     """Check for winning combinations in the transposed spin and calculates winnings.
 
     :param transposed_spin: A list of lists representing the rows of the slot machine.
@@ -82,10 +85,13 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
             - Coordinates of found scatter symbols [[row, col], ...].
             - Flag indicating if bonus game is triggered (bool).
             - Coordinates of found bonus symbols [[row, col], ...].
+            - Number of free spins awarded (int).
+            - Coordinates of all Wild symbols on the grid [[row, col], ...].
     """
     total_winnings = 0
     winning_lines = {}
     scatter_positions = [] # Initialize scatter_positions here
+    wild_positions = []
 
     for line_num in range(1, lines + 1):
         positions = WINNING_LINES[line_num]
@@ -118,6 +124,8 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
         for c, symbol in enumerate(row):
             if symbol == SCATTER_SYMBOL:
                 scatter_positions.append([r, c])
+            if symbol == WILD_SYMBOL:
+                wild_positions.append([r, c])
     
     scatter_count = len(scatter_positions)
     scatter_winnings = 0
@@ -138,4 +146,21 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
     
     bonus_triggered = len(bonus_positions) >= 3
 
-    return total_winnings + scatter_winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions, bonus_triggered, bonus_positions
+    # Free Spins Logic: 3+ Wilds anywhere
+    wild_count = len(wild_positions)
+    free_spins_awarded = 0
+    if wild_count >= 3:
+        possible_tiers = [t for t in FREE_SPINS_CONFIG if t <= wild_count]
+        free_spins_awarded = FREE_SPINS_CONFIG[max(possible_tiers)]
+
+    return (
+        total_winnings + scatter_winnings,
+        winning_lines,
+        scatter_winnings,
+        scatter_count,
+        scatter_positions,
+        bonus_triggered,
+        bonus_positions,
+        free_spins_awarded,
+        wild_positions,
+    )

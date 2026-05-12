@@ -49,7 +49,7 @@ def test_check_winning_combinations_1st_to_3rd_lines():
     bet = 10
     lines = 5
 
-    winnings, winning_lines, _, _, _ = check_winning_combinations(mock_spin, lines, bet)
+    winnings, winning_lines, *_ = check_winning_combinations(mock_spin, lines, bet)
 
     # ♦(5x)=15, ♥(5x)=30, ♠(5x)=50 -> (15+30+50)*10 = 950
     assert winnings == 950
@@ -66,7 +66,7 @@ def test_check_winning_combinations_4rd_5th_lines():
     bet = 10
     lines = 5
 
-    winnings, winning_lines, _, _, _ = check_winning_combinations(mock_spin, lines, bet)
+    winnings, winning_lines, *_ = check_winning_combinations(mock_spin, lines, bet)
 
     # ♣(5x)=8. Two lines win: 8*10 + 8*10 = 160
     assert winnings == 160
@@ -84,7 +84,7 @@ def test_check_winning_combinations_with_wilds_completing_lines():
     bet = 10
     lines = 3
 
-    winnings, winning_lines, _, _, _ = check_winning_combinations(mock_spin, lines, bet)
+    winnings, winning_lines, *_ = check_winning_combinations(mock_spin, lines, bet)
 
     # Line 1: ♠(5x)=50 * 10 = 500
     # Line 2: ♠(5x)=50 * 10 = 500 (Defaults to ♠ for pure Wilds)
@@ -102,7 +102,7 @@ def test_check_winning_combinations_wild_interruption():
     bet = 1
     lines = 1
 
-    winnings, winning_lines, _, _, _ = check_winning_combinations(mock_spin, lines, bet)
+    winnings, winning_lines, *_ = check_winning_combinations(mock_spin, lines, bet)
 
     # Target is ♣. Match count: 3.
     # ♣(3x)=2 * 1 = 2
@@ -120,7 +120,18 @@ def test_check_winning_combinations_with_scatters():
     lines = 10
     # Total bet = 10 * 10 = 100. Scatter tier 3 = 2x Total Bet = 200.
 
-    winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions = check_winning_combinations(mock_spin, lines, bet)
+    winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions, *_ = check_winning_combinations(mock_spin, lines, bet)
 
     assert scatter_count == 3
     assert scatter_winnings == 200
+
+
+def test_check_winning_combinations_collects_wild_positions_for_free_spins():
+    mock_spin = [
+        ["🌟", "♠", "♥", "♦", "♣"],
+        ["♠", "🌟", "♥", "♦", "♣"],
+        ["♠", "♥", "🌟", "♦", "♣"],
+    ]
+    *_, wild_positions = check_winning_combinations(mock_spin, lines=5, bet=1)
+
+    assert sorted(wild_positions) == [[0, 0], [1, 1], [2, 2]]
