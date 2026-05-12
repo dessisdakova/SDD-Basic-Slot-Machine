@@ -21,9 +21,35 @@ const PAYLINE_HIGHLIGHT_BEFORE_FREE_SPIN_MS = 1200;
 const WIN_DISPLAY_SHELL =
     'text-center mb-4 min-h-[10rem] w-full flex flex-col justify-center items-center gap-2 px-2 shrink-0';
 
+/** Reserved strip under controls so the main slot card height does not jump when messages appear/clear */
+const MESSAGE_AREA_SHELL =
+    'mt-6 flex min-h-[3.5rem] w-full shrink-0 items-center justify-center px-2 text-center font-medium break-words';
+
+/**
+ * @param {HTMLElement | null} messageArea
+ * @param {string} content Empty string clears the area but keeps layout.
+ * @param {'default'|'muted'|'error'} tone
+ */
+function setMessageArea(messageArea, content, tone = 'default') {
+    if (!messageArea) return;
+    if (content === undefined || content === null || content === '') {
+        messageArea.className = MESSAGE_AREA_SHELL;
+        messageArea.innerHTML = '';
+        return;
+    }
+    const toneClass =
+        tone === 'error' ? 'text-red-600' : tone === 'muted' ? 'text-gray-500' : 'text-gray-800';
+    messageArea.className = `${MESSAGE_AREA_SHELL} ${toneClass}`;
+    if (typeof content === 'string' && content.includes('<')) {
+        messageArea.innerHTML = content;
+    } else {
+        messageArea.textContent = content;
+    }
+}
+
 function htmlFreeSpinsAwarded(count) {
     const phrase = count === 1 ? 'Free spin awarded!' : 'Free spins awarded!';
-    return `<span class="text-xl font-bold text-orange-600 animate-bounce">${count} ${phrase}</span>`;
+    return `<span class="text-xl font-bold text-blue-600 animate-bounce">${count} ${phrase}</span>`;
 }
 
 function refreshBalanceDisplay() {
@@ -64,7 +90,7 @@ function syncFreeSpinModeUI() {
     const inMode = freeSpinsRemaining > 0 || freeSpinSessionEndPending;
     const body = document.getElementById('game-body');
     if (body) {
-        body.classList.toggle('bg-orange-500', inMode);
+        body.classList.toggle('bg-blue-500', inMode);
         body.classList.toggle('bg-gray-100', !inMode);
     }
 
@@ -75,7 +101,7 @@ function syncFreeSpinModeUI() {
         } else {
             banner.textContent = '';
         }
-        banner.classList.toggle('bg-orange-500', inMode);
+        banner.classList.toggle('bg-blue-500', inMode);
         banner.classList.toggle('text-white', inMode);
         banner.classList.toggle('animate-pulse', inMode);
         banner.classList.toggle('font-black', inMode);
@@ -101,7 +127,7 @@ function syncFreeSpinModeUI() {
     if (panel) {
         panel.classList.toggle('hidden', !inMode);
         panel.classList.toggle('ring-2', inMode);
-        panel.classList.toggle('ring-orange-400', inMode);
+        panel.classList.toggle('ring-blue-400', inMode);
     }
 
     const cashoutBtn = document.getElementById('cashout-button');
@@ -473,7 +499,7 @@ function updateUI(data) {
         const lines = [];
         if (data.jackpot_won && data.jackpot_win_amount > 0) {
             lines.push(
-                `<span class="text-2xl font-black text-amber-500 drop-shadow-sm animate-bounce">🎰 JACKPOT! You won $${data.jackpot_win_amount}! 🎰</span>`
+                `<span class="text-2xl font-black text-pink-500 drop-shadow-sm animate-bounce">🎰 JACKPOT! You won $${data.jackpot_win_amount}! 🎰</span>`
             );
         }
         if (data.bonus_triggered) {
@@ -497,11 +523,11 @@ function updateUI(data) {
         const winMsg = lines.join('<br>');
         winDisplay.innerHTML = winMsg;
         winDisplay.className = WIN_DISPLAY_SHELL;
-        messageArea.innerHTML = '';
+        setMessageArea(messageArea, '', 'default');
     } else {
         winDisplay.innerHTML = `<span class="text-lg font-medium text-gray-500">Better luck next time!</span>`;
         winDisplay.className = WIN_DISPLAY_SHELL;
-        messageArea.innerHTML = '';
+        setMessageArea(messageArea, '', 'default');
     }
 
     if (data.bonus_triggered) {
@@ -592,7 +618,7 @@ function handleDeposit() {
         currentBalance = amount;
         document.getElementById('deposit-overlay').classList.add('hidden');
         document.getElementById('deposit-overlay').classList.remove('flex');
-        document.getElementById('message-area').textContent = "Ready to play!";
+        setMessageArea(document.getElementById('message-area'), 'Ready to play!', 'default');
         const wd = document.getElementById('win-display');
         wd.innerHTML = "";
         wd.className = WIN_DISPLAY_SHELL;
@@ -604,7 +630,6 @@ function handleDeposit() {
 }
 
 function handleCashout() {
-    const messageArea = document.getElementById('message-area');
     const cashoutAmount = currentBalance;
     currentBalance = 0;
     
@@ -623,7 +648,7 @@ function handlePlayAgain() {
     document.getElementById('deposit-overlay').classList.remove('hidden');
     document.getElementById('deposit-overlay').classList.add('flex');
     document.querySelector('.bg-white.p-8').classList.remove('hidden'); // Show game content again
-    document.getElementById('message-area').textContent = ""; // Clear previous messages
+    setMessageArea(document.getElementById('message-area'), '', 'default');
     const wdPlay = document.getElementById('win-display');
     wdPlay.innerHTML = "";
     wdPlay.className = WIN_DISPLAY_SHELL;
@@ -653,8 +678,7 @@ async function handleSpin(isFree = false) {
     // Immediate UI reset and button disable to prevent double-clicks
     spinBtn.disabled = true;
     spinBtn.style.opacity = "0.5";
-    messageArea.innerHTML = "Spinning...";
-    messageArea.className = "mt-6 text-center font-medium text-gray-500";
+    setMessageArea(messageArea, 'Spinning...', 'muted');
     winDisplay.innerHTML = "";
     winDisplay.className = WIN_DISPLAY_SHELL;
 
@@ -682,11 +706,10 @@ async function handleSpin(isFree = false) {
             } else {
                 errorMessage = `❌ ${data.detail}`;
             }
-            messageArea.innerHTML = errorMessage;
-            messageArea.className = 'mt-6 text-center font-medium text-red-600';
+            setMessageArea(messageArea, errorMessage, 'error');
         }
     } catch (error) {
-        messageArea.textContent = '❌ Connection Error';
+        setMessageArea(messageArea, '❌ Connection Error', 'error');
     } finally {
         syncFreeSpinModeUI();
         setTimeout(() => {

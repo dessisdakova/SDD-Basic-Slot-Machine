@@ -74,7 +74,7 @@ JACKPOT_SEED = 100
 JACKPOT_CONTRIBUTION_PERCENT_OF_TOTAL_BET = 5
 
 # Option A (spec): independent random trial per paid spin after contribution.
-JACKPOT_HIT_PROBABILITY = 0.1 #0.0005
+JACKPOT_HIT_PROBABILITY = 0.0005
 
 # Human-readable rules for API/UI (single source for info modal copy).
 JACKPOT_RULES_SUMMARY = (
