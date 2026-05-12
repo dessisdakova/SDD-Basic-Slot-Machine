@@ -11,13 +11,13 @@ BONUS_SYMBOL = "🎁"
 
 # pass this dictionary to get_slot_machine_spin() func
 SYMBOLS_AND_COUNT = {
-    "♠": 2,
+    "♠": 3,
     "♥": 5,
     "♦": 12,
     "♣": 20,
-    WILD_SYMBOL: 10,
-    SCATTER_SYMBOL: 2,
-    BONUS_SYMBOL: 10
+    WILD_SYMBOL: 3,
+    SCATTER_SYMBOL: 3,
+    BONUS_SYMBOL: 3
 }
 
 WINNING_LINES = {
