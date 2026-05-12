@@ -3,10 +3,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from slot_machine.constants import (
-    MAX_LINES, MIN_BET, MAX_BET, ROWS, REELS, SYMBOLS_AND_COUNT, 
+    MAX_LINES, MIN_BET, MAX_BET, ROWS, REELS, SYMBOLS_AND_COUNT,
     WINNING_LINES, SYMBOLS_AND_MULTIPLIERS, SCATTER_SYMBOL, SCATTER_MULTIPLIERS,
-    BONUS_SYMBOL, BONUS_MINI_GAME_PRIZES
+    BONUS_SYMBOL, BONUS_MINI_GAME_PRIZES,
+    JACKPOT_SEED, JACKPOT_CONTRIBUTION_PERCENT_OF_TOTAL_BET, JACKPOT_RULES_SUMMARY,
 )
+from slot_machine.jackpot import get_jackpot_pool
 from slot_machine.game import execute_spin
 
 app = FastAPI(title="Slot Machine API")
@@ -39,7 +41,11 @@ async def get_configuration():
         "scatter_symbol": SCATTER_SYMBOL,
         "scatter_multipliers": {str(k): v for k, v in SCATTER_MULTIPLIERS.items()},
         "bonus_symbol": BONUS_SYMBOL,
-        "bonus_mini_game_prizes": BONUS_MINI_GAME_PRIZES
+        "bonus_mini_game_prizes": BONUS_MINI_GAME_PRIZES,
+        "jackpot_pool": get_jackpot_pool(),
+        "jackpot_seed": JACKPOT_SEED,
+        "jackpot_contribution_percent_of_total_bet": JACKPOT_CONTRIBUTION_PERCENT_OF_TOTAL_BET,
+        "jackpot_rules_summary": JACKPOT_RULES_SUMMARY,
     }
 
 @app.post("/game/spin")

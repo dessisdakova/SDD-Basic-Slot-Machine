@@ -63,8 +63,9 @@ Add (names indicative—align with actual code):
 | Constant | Purpose |
 | -------- | ------- |
 | `JACKPOT_SEED` | Balance of the pool after reset (integer). |
-| `JACKPOT_CONTRIBUTION_*` | Rule for adding to the pool on paid spins (e.g. rate or fixed increment). |
-| `JACKPOT_HIT_PROBABILITY` or symbol rules | Drives hit condition for Option A or B. |
+| `JACKPOT_CONTRIBUTION_PERCENT_OF_TOTAL_BET` | Integer percent of `total_bet` each paid spin: `(total_bet * percent) // 100`, or **$1** when that quotient is 0 but `total_bet > 0`. |
+| `JACKPOT_HIT_PROBABILITY` | Option A: Bernoulli trial per paid spin after contribution (`random() < probability`). |
+| `JACKPOT_RULES_SUMMARY` | Copy for API + info modal (no internal probability value). |
 
 All tunables should live in **one place** for SDD review and future Phase 12 externalization.
 
@@ -76,12 +77,15 @@ All tunables should live in **one place** for SDD review and future Phase 12 ext
 
 - **Process-local in-memory** store for the jackpot pool is sufficient for Phase 8 (matches current single-session demo app). Document that restarting the server resets the pool to seed.
 
-### `slot_machine/core.py` (or dedicated module)
+### `slot_machine/jackpot.py` (dedicated module)
 
-- Function(s) to:
-  - Apply **contribution** after a paid spin’s `total_bet` is known.
-  - Evaluate **hit condition** and return `(jackpot_won: bool, jackpot_amount: int)` (or amount 0 if miss).
-  - **Reset** pool after a win.
+Keeps a process-local pool and exposes:
+
+- `contribution_amount(total_bet, is_free_spin)` — pure helper for the contribution math.
+- `process_jackpot_for_spin(total_bet, is_free_spin, random_fn=None)` — applies contribution (paid spins only), runs one hit trial, resets on win; returns `(jackpot_pool_after, jackpot_won, jackpot_win_amount)`.
+- `get_jackpot_pool()` — current pool (for `GET /game/configuration`).
+
+`slot_machine/core.py` stays focused on reels and paylines; jackpot logic is imported from `jackpot.py` in `game.py`.
 
 ### `slot_machine/game.py`
 
@@ -99,9 +103,10 @@ Extend **`POST /game/spin`** JSON response with fields such as:
 - `jackpot_won` — boolean.
 - `jackpot_win_amount` — integer; `0` if no win.
 
-Extend **`GET /game/configuration`** (optional but recommended) with:
+Extend **`GET /game/configuration`** with:
 
-- `jackpot_seed` or display-only hints (e.g. contribution description for the info modal—avoid leaking internal probabilities if undesirable; at minimum expose **seed** and **rules text**).
+- `jackpot_pool` — live current pool (same in-memory store as spins).
+- `jackpot_seed`, `jackpot_contribution_percent_of_total_bet`, `jackpot_rules_summary` — for UI and transparency (hit probability is **not** exposed on this endpoint).
 
 ---
 
@@ -128,9 +133,9 @@ Extend **`GET /game/configuration`** (optional but recommended) with:
 
 _Record chosen hit model (Option A vs B), exact contribution formula, and any deviations from this spec._
 
-- [ ] Contribution model:
-- [ ] Hit condition model:
-- [ ] Jackpot added to balance as separate field vs bundled in `winnings`:
+- **Contribution model:** primarily **percentage of total bet** (`lines × bet`), integer dollars: `(total_bet * JACKPOT_CONTRIBUTION_PERCENT_OF_TOTAL_BET) // 100` on paid spins only; if that is **0** while `total_bet > 0`, contribute **$1** so minimum stakes still grow the pool (`jackpot.contribution_amount`).
+- **Hit condition model:** **Option A** — one independent trial per paid spin after contribution; `JACKPOT_HIT_PROBABILITY` in `constants.py`; injectable `random_fn` on `process_jackpot_for_spin` / `execute_spin(..., jackpot_random_fn=...)` for tests.
+- **Jackpot vs `winnings`:** `winnings` remains payline + scatter only (unchanged semantics). Jackpot payout is `jackpot_win_amount`; `new_balance` includes line/scatter winnings plus `jackpot_win_amount`. API exposes `jackpot_won`, `jackpot_win_amount`, `jackpot_pool`.
 
 ---
 

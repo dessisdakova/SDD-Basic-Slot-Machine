@@ -216,6 +216,11 @@ async function initGame() {
         bonusMiniGamePrizes = config.bonus_mini_game_prizes || {};
         document.getElementById('max-lines-label').textContent = maxLines;
         document.getElementById('max-bet-label').textContent = maxBet;
+
+        const jackpotEl = document.getElementById('jackpot-pool-display');
+        if (jackpotEl && typeof config.jackpot_pool === 'number') {
+            jackpotEl.textContent = `$${config.jackpot_pool}`;
+        }
         
         // Generate line indicators
         const left = document.getElementById('left-indicators');
@@ -329,6 +334,14 @@ function populateInfoModal(config) {
 
     // Populate General Rules Section
     const generalRulesContent = document.getElementById('general-rules-content');
+    const jackpotSeed = config.jackpot_seed != null ? config.jackpot_seed : '—';
+    const jackpotPct =
+        config.jackpot_contribution_percent_of_total_bet != null
+            ? config.jackpot_contribution_percent_of_total_bet
+            : '—';
+    const jackpotRules =
+        config.jackpot_rules_summary ||
+        'Paid spins grow the progressive pool; free spins do not contribute or win the jackpot.';
     generalRulesContent.innerHTML = `
         <div class="space-y-2">
             <p>🌟 <strong>Wild Symbol:</strong> Substitutes for any standard symbol. A line of pure Wilds pays the highest multiplier.</p>
@@ -336,6 +349,11 @@ function populateInfoModal(config) {
             <p>🎁 <strong>Bonus Symbol:</strong> 3 symbols on reels 2, 3, and 4 trigger an interactive "Pick-a-Prize" mini-game with mystery multipliers - x10, x25, and x200!</p>
             <p>🔄 <strong>Free Spins:</strong> Land 3+ 🌟 Wild symbols anywhere on the grid to trigger free spins!</p>
             <p>ℹ️ Wins are calculated from left to right on active paylines.</p>
+            <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-amber-950">
+                <p class="font-bold text-amber-900">Progressive jackpot</p>
+                <p class="mt-1">${jackpotRules}</p>
+                <p class="mt-2 text-xs text-amber-800/90">Pool resets to <strong>$${jackpotSeed}</strong> after each jackpot win. Each paid spin adds about <strong>${jackpotPct}%</strong> of your total bet to the pool (integer dollars). The hit is a separate random chance on each paid spin.</p>
+            </div>
         </div>
     `;
 
@@ -387,6 +405,11 @@ function updateUI(data) {
 
     // Keep full cumulative balance from server for the next spin request body
     currentBalance = data.new_balance;
+
+    const jackpotPoolEl = document.getElementById('jackpot-pool-display');
+    if (jackpotPoolEl && typeof data.jackpot_pool === 'number') {
+        jackpotPoolEl.textContent = `$${data.jackpot_pool}`;
+    }
 
     // Consume one free spin only after the server confirms (avoids switching UI on button press)
     if (data.is_free_spin && freeSpinsRemaining > 0) {
@@ -446,8 +469,13 @@ function updateUI(data) {
         applyFreeSpinWildHighlights(grid, wildPositions);
     }
 
-    if (data.winnings > 0 || data.free_spins_won > 0) {
+    if (data.winnings > 0 || data.free_spins_won > 0 || data.jackpot_won) {
         const lines = [];
+        if (data.jackpot_won && data.jackpot_win_amount > 0) {
+            lines.push(
+                `<span class="text-2xl font-black text-amber-500 drop-shadow-sm animate-bounce">🎰 JACKPOT! You won $${data.jackpot_win_amount}! 🎰</span>`
+            );
+        }
         if (data.bonus_triggered) {
             lines.push(
                 `<span class="text-lg font-bold text-purple-700">🎁 BONUS TRIGGERED!</span>`
@@ -455,7 +483,7 @@ function updateUI(data) {
         }
         if (data.winnings > 0) {
             lines.push(
-                `<span class="text-xl font-bold text-green-600 animate-bounce">🎉 You won $${data.winnings}!</span>`
+                `<span class="text-xl font-bold text-green-600 animate-bounce">🎉 You won $${data.winnings} on the reels!</span>`
             );
         }
         if (data.scatter_winnings > 0) {
