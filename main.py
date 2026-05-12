@@ -2,7 +2,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
-from slot_machine.constants import MAX_LINES, MIN_BET, MAX_BET, ROWS, REELS, SYMBOLS_AND_COUNT, WINNING_LINES, SYMBOLS_AND_MULTIPLIERS, SCATTER_SYMBOL, SCATTER_MULTIPLIERS
+from slot_machine.constants import (
+    MAX_LINES, MIN_BET, MAX_BET, ROWS, REELS, SYMBOLS_AND_COUNT, 
+    WINNING_LINES, SYMBOLS_AND_MULTIPLIERS, SCATTER_SYMBOL, SCATTER_MULTIPLIERS,
+    BONUS_SYMBOL, BONUS_MINI_GAME_PRIZES
+)
 from slot_machine.game import execute_spin
 
 app = FastAPI(title="Slot Machine API")
@@ -32,7 +36,9 @@ async def get_configuration():
         "winning_lines_config": WINNING_LINES,
         "multipliers": SYMBOLS_AND_MULTIPLIERS,
         "scatter_symbol": SCATTER_SYMBOL,
-        "scatter_multipliers": {str(k): v for k, v in SCATTER_MULTIPLIERS.items()}
+        "scatter_multipliers": {str(k): v for k, v in SCATTER_MULTIPLIERS.items()},
+        "bonus_symbol": BONUS_SYMBOL,
+        "bonus_mini_game_prizes": BONUS_MINI_GAME_PRIZES
     }
 
 @app.post("/game/spin")

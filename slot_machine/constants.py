@@ -16,8 +16,8 @@ SYMBOLS_AND_COUNT = {
     "♦": 12,
     "♣": 20,
     WILD_SYMBOL: 2,
-    SCATTER_SYMBOL: 4,
-    BONUS_SYMBOL: 10 # Bonus symbol frequency
+    SCATTER_SYMBOL: 2,
+    BONUS_SYMBOL: 5
 }
 
 WINNING_LINES = {

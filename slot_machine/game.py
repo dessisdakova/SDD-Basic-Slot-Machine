@@ -15,7 +15,7 @@ def execute_spin(balance: int, lines: int, bet: int) -> dict:
     spin_reels = generate_random_reels_in_spin(ROWS, REELS)
     transposed_spin = convert_reels_to_rows(spin_reels)
     # check_winning_combinations now returns 7 values to support Phase 6 Bonus mechanics
-    winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions, bonus_triggered, bonus_symbols_found = \
+    winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions, bonus_triggered, bonus_positions = \
         check_winning_combinations(transposed_spin, lines, bet)
 
     return {
@@ -28,7 +28,7 @@ def execute_spin(balance: int, lines: int, bet: int) -> dict:
         "total_bet": total_bet,
         "new_balance": balance - total_bet + winnings,
         "bonus_triggered": bonus_triggered,
-        "bonus_symbols_found": bonus_symbols_found
+        "bonus_positions": bonus_positions
     }
 
 def spin(balance: int) -> int:

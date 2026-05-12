@@ -5,7 +5,7 @@ Introduce a "Bonus" symbol that triggers an interactive mini-game, providing pla
 
 ## Mechanics
 - **Bonus Symbol:** Represented by "🎁" (Gift).
-- **Trigger:** Awarded when 3 or more "🎁" symbols appear anywhere on the 5x3 grid.
+- **Trigger:** Awarded when 3 "🎁" symbols appear on 2nd, 3rd and 4th reel.
 - **Interaction Flow:** 
     - Upon triggering, standard payline and scatter winnings are processed first.
     - A "Bonus Game" overlay automatically appears.

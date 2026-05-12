@@ -6,6 +6,7 @@ let maxBet = 10;
 let multipliersConfig = {};
 let bonusSymbol = '';
 let scatterSymbol = '';
+let bonusMiniGamePrizes = {};
 
 async function initGame() {
     try {
@@ -20,6 +21,7 @@ async function initGame() {
         maxLines = config.max_lines;
         maxBet = config.max_bet;
         multipliersConfig = config.multipliers;
+        bonusMiniGamePrizes = config.bonus_mini_game_prizes || {};
         document.getElementById('max-lines-label').textContent = maxLines;
         document.getElementById('max-bet-label').textContent = maxBet;
         
@@ -246,11 +248,26 @@ function updateUI(data) {
                 }
             });
         }
+
+        // Highlight bonus symbols
+        if (data.bonus_triggered) {
+            data.bonus_positions.forEach(([row, col]) => {
+                const gridIndex = row * reelsCount + col;
+                const cell = grid.children[gridIndex];
+                if (cell) {
+                    cell.classList.remove('dimmed-cell');
+                    cell.classList.add('bonus-win', 'animate-pulse');
+                }
+            });
+        }
     }
 
     // Show Result Message
     if (data.winnings > 0) {
         let winMsg = `🎉 You won $${data.winnings}!`;
+        if (data.bonus_triggered) {
+            winMsg = `🎁 BONUS TRIGGERED! <br>` + winMsg;
+        }
         if (data.scatter_winnings > 0) {
             winMsg += `<br><span class="text-sm text-purple-600 font-bold">💎 Scatter Win: ${data.scatter_count} Diamonds won $${data.scatter_winnings}!</span>`;
         }
@@ -260,6 +277,70 @@ function updateUI(data) {
         messageArea.innerHTML = 'Better luck next time!';
         messageArea.className = 'mt-6 text-center font-medium text-gray-500';
     }
+
+    // Handle Bonus Game Trigger
+    if (data.bonus_triggered) {
+        setTimeout(() => {
+            startBonusMiniGame(data.total_bet);
+        }, 1500);
+    }
+}
+
+function startBonusMiniGame(totalBet) {
+    // Create overlay dynamically since we can't edit index.html
+    const overlay = document.createElement('div');
+    overlay.id = 'bonus-game-overlay';
+    overlay.className = 'fixed inset-0 bg-purple-900/90 flex flex-col items-center justify-center z-50 p-4';
+    
+    overlay.innerHTML = `
+        <h2 class="text-4xl font-black text-white mb-2 animate-bounce">🎁 BONUS ROUND 🎁</h2>
+        <p class="text-purple-200 mb-8 text-lg text-center">Pick a Mystery Chest to reveal your multiplier!</p>
+        <div class="flex gap-6">
+            ${[1, 2, 3].map(i => `
+                <div class="bonus-chest w-32 h-32 bg-yellow-500 rounded-xl border-4 border-yellow-300 flex items-center justify-center text-6xl cursor-pointer hover:scale-110 transition-transform shadow-2xl" onclick="resolveBonus(this, ${totalBet})">
+                    🎁
+                </div>
+            `).join('')}
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function resolveBonus(element, totalBet) {
+    // Prevent multiple clicks
+    const chests = document.querySelectorAll('.bonus-chest');
+    chests.forEach(c => c.onclick = null);
+
+    // Logic to pick a prize from the pool
+    let prizes = Object.values(bonusMiniGamePrizes || {});
+    
+    // Safety fallback if configuration is missing or empty
+    if (prizes.length === 0) {
+        prizes = [10, 25, 200];
+    }
+
+    const multiplier = prizes[Math.floor(Math.random() * prizes.length)];
+    const winAmount = multiplier * totalBet;
+
+    element.innerHTML = `<span class="text-2xl font-bold text-white">${multiplier}x</span>`;
+    element.classList.add('bg-green-500', 'border-green-300');
+
+    const winAnnouncement = document.createElement('div');
+    winAnnouncement.className = 'mt-12 text-3xl font-bold text-yellow-400 animate-pulse text-center';
+    winAnnouncement.innerHTML = `AMAZING!<br>You found a $${winAmount} Prize!`;
+    document.getElementById('bonus-game-overlay').appendChild(winAnnouncement);
+
+    // Update local balance
+    currentBalance += winAmount;
+    document.getElementById('balance-display').textContent = `$${currentBalance}`;
+
+    // Close after delay
+    setTimeout(() => {
+        const overlay = document.getElementById('bonus-game-overlay');
+        overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.remove(), 500);
+        document.getElementById('message-area').innerHTML += `<br><span class="text-purple-700 font-bold">🎁 Bonus Game won $${winAmount}!</span>`;
+    }, 2500);
 }
 
 function handleDeposit() {
