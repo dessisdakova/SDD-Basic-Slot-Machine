@@ -139,6 +139,7 @@ function populateInfoModal(config) {
         <div class="space-y-2">
             <p>🌟 <strong>Wild Symbol:</strong> Substitutes for any standard symbol. A line of pure Wilds pays the highest multiplier.</p>
             <p>💎 <strong>Scatter Symbol:</strong> 3+ symbols anywhere on the grid award a multiplier of your <strong>Total Bet</strong> (indicated by * in the table).</p>
+            <p>🎁 <strong>Bonus Symbol:</strong> 3 symbols on reels 2, 3, and 4 trigger an interactive "Pick-a-Prize" mini-game with mystery multipliers - x10, x25, and x200!</p>
             <p>ℹ️ Wins are calculated from left to right on active paylines.</p>
         </div>
     `;
