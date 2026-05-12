@@ -8,7 +8,10 @@ def test_spin_returns_correct_value(mocker):
                  return_value=[['♠', '♥', '♦'], ['♣', '♠', '♦'], ['♥', '♣', '♠']])
     mocker.patch("slot_machine.game.convert_reels_to_rows",
                  return_value=[['♠', '♣', '♥'], ['♥', '♠', '♣'], ['♦', '♦', '♦']])
-    mocker.patch("slot_machine.game.check_winning_combinations", return_value=(100, [3]))
+    mocker.patch(
+        "slot_machine.game.check_winning_combinations",
+        return_value=(100, {}, 0, 0, [], False, [], 0, []),
+    )
     mocker.patch("slot_machine.game.print_spin")
     mocker.patch("slot_machine.game.print_winnings")
 

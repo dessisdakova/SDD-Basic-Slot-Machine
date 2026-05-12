@@ -71,7 +71,7 @@ def convert_reels_to_rows(reels: list) -> list[list[str]]:
 
     return rows
 
-def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> tuple[int, dict[int, int], int, int, list[list[int]], bool, list[list[int]], int]:
+def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> tuple[int, dict[int, int], int, int, list[list[int]], bool, list[list[int]], int, list[list[int]]]:
     """Check for winning combinations in the transposed spin and calculates winnings.
 
     :param transposed_spin: A list of lists representing the rows of the slot machine.
@@ -86,6 +86,7 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
             - Flag indicating if bonus game is triggered (bool).
             - Coordinates of found bonus symbols [[row, col], ...].
             - Number of free spins awarded (int).
+            - Coordinates of all Wild symbols on the grid [[row, col], ...].
     """
     total_winnings = 0
     winning_lines = {}
@@ -152,4 +153,14 @@ def check_winning_combinations(transposed_spin: list, lines: int, bet: int) -> t
         possible_tiers = [t for t in FREE_SPINS_CONFIG if t <= wild_count]
         free_spins_awarded = FREE_SPINS_CONFIG[max(possible_tiers)]
 
-    return total_winnings + scatter_winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions, bonus_triggered, bonus_positions, free_spins_awarded
+    return (
+        total_winnings + scatter_winnings,
+        winning_lines,
+        scatter_winnings,
+        scatter_count,
+        scatter_positions,
+        bonus_triggered,
+        bonus_positions,
+        free_spins_awarded,
+        wild_positions,
+    )

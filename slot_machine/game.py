@@ -14,9 +14,9 @@ def execute_spin(balance: int, lines: int, bet: int, is_free_spin: bool = False)
 
     spin_reels = generate_random_reels_in_spin(ROWS, REELS)
     transposed_spin = convert_reels_to_rows(spin_reels)
-    # check_winning_combinations now returns 8 values to support Phase 7 Free Spins
+    # check_winning_combinations returns payline/scatter/bonus/free-spin fields + wild cell positions
     winnings, winning_lines, scatter_winnings, scatter_count, scatter_positions, \
-    bonus_triggered, bonus_positions, free_spins_won = \
+    bonus_triggered, bonus_positions, free_spins_won, wild_positions = \
         check_winning_combinations(transposed_spin, lines, bet)
 
     return {
@@ -31,6 +31,7 @@ def execute_spin(balance: int, lines: int, bet: int, is_free_spin: bool = False)
         "bonus_triggered": bonus_triggered,
         "bonus_positions": bonus_positions,
         "free_spins_won": free_spins_won,
+        "wild_positions": wild_positions,
         "is_free_spin": is_free_spin
     }
 
