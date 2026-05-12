@@ -9,9 +9,13 @@ let scatterSymbol = '';
 let bonusMiniGamePrizes = {};
 let freeSpinsRemaining = 0;
 let freeSpinSessionWinnings = 0;
+/** True briefly after the last free-spin result until paid-spin chrome is applied */
+let freeSpinSessionEndPending = false;
+let freeSpinSessionEndTimer = null;
+const FREE_SPIN_SESSION_END_DELAY_MS = 1200;
 let highlightSequenceTimeouts = [];
 let lastSpinWildPositions = [];
-const PAYLINE_HIGHLIGHT_BEFORE_FREE_SPIN_MS = 2000;
+const PAYLINE_HIGHLIGHT_BEFORE_FREE_SPIN_MS = 1200;
 
 /** Keeps the game card layout stable — apply whenever #win-display is cleared or reset */
 const WIN_DISPLAY_SHELL =
@@ -25,15 +29,39 @@ function htmlFreeSpinsAwarded(count) {
 function refreshBalanceDisplay() {
     const el = document.getElementById('balance-display');
     if (!el) return;
-    const frozen = freeSpinsRemaining > 0;
+    const frozen = freeSpinsRemaining > 0 || freeSpinSessionEndPending;
     const shown = frozen
         ? Math.max(0, currentBalance - freeSpinSessionWinnings)
         : currentBalance;
     el.textContent = `$${shown}`;
 }
 
+function clearFreeSpinSessionEndSchedule() {
+    if (freeSpinSessionEndTimer !== null) {
+        clearTimeout(freeSpinSessionEndTimer);
+        freeSpinSessionEndTimer = null;
+    }
+    freeSpinSessionEndPending = false;
+}
+
+/** After the final free spin, keep free-spin chrome until the timer (orange bg, panel, etc.). */
+function scheduleFreeSpinSessionEndChrome() {
+    if (freeSpinSessionEndTimer !== null) {
+        clearTimeout(freeSpinSessionEndTimer);
+        freeSpinSessionEndTimer = null;
+    }
+    freeSpinSessionEndPending = true;
+    freeSpinSessionEndTimer = setTimeout(() => {
+        freeSpinSessionEndTimer = null;
+        freeSpinSessionEndPending = false;
+        freeSpinSessionWinnings = 0;
+        syncFreeSpinModeUI();
+    }, FREE_SPIN_SESSION_END_DELAY_MS);
+    syncFreeSpinModeUI();
+}
+
 function syncFreeSpinModeUI() {
-    const inMode = freeSpinsRemaining > 0;
+    const inMode = freeSpinsRemaining > 0 || freeSpinSessionEndPending;
     const body = document.getElementById('game-body');
     if (body) {
         body.classList.toggle('bg-orange-500', inMode);
@@ -360,14 +388,26 @@ function updateUI(data) {
     // Keep full cumulative balance from server for the next spin request body
     currentBalance = data.new_balance;
 
-    if (data.free_spins_won > 0) {
-        freeSpinsRemaining += data.free_spins_won;
+    // Consume one free spin only after the server confirms (avoids switching UI on button press)
+    if (data.is_free_spin && freeSpinsRemaining > 0) {
+        freeSpinsRemaining--;
     }
     if (data.is_free_spin) {
         freeSpinSessionWinnings += data.winnings;
     }
-    if (freeSpinsRemaining === 0) {
+    if (data.free_spins_won > 0) {
+        freeSpinsRemaining += data.free_spins_won;
+    }
+
+    const deferPaidChrome = data.is_free_spin && freeSpinsRemaining === 0;
+
+    if (freeSpinsRemaining > 0) {
+        clearFreeSpinSessionEndSchedule();
+    }
+
+    if (!deferPaidChrome && freeSpinsRemaining === 0) {
         freeSpinSessionWinnings = 0;
+        clearFreeSpinSessionEndSchedule();
     }
 
     indicators.forEach((ind) => ind.classList.remove('active'));
@@ -442,7 +482,11 @@ function updateUI(data) {
         }, 1500);
     }
 
-    syncFreeSpinModeUI();
+    if (deferPaidChrome) {
+        scheduleFreeSpinSessionEndChrome();
+    } else {
+        syncFreeSpinModeUI();
+    }
 }
 
 function startBonusMiniGame(totalBet) {
@@ -526,6 +570,7 @@ function handleDeposit() {
         wd.className = WIN_DISPLAY_SHELL;
         freeSpinsRemaining = 0;
         freeSpinSessionWinnings = 0;
+        clearFreeSpinSessionEndSchedule();
         syncFreeSpinModeUI();
     }
 }
@@ -556,15 +601,18 @@ function handlePlayAgain() {
     wdPlay.className = WIN_DISPLAY_SHELL;
     freeSpinsRemaining = 0;
     freeSpinSessionWinnings = 0;
+    clearFreeSpinSessionEndSchedule();
     syncFreeSpinModeUI();
 }
 
 async function handleSpin(isFree = false) {
     clearHighlightSequenceTimeouts();
     if (!isFree) {
+        clearFreeSpinSessionEndSchedule();
         freeSpinSessionWinnings = 0;
         const ft = document.getElementById('free-spin-winnings-total');
         if (ft) ft.textContent = '$0';
+        syncFreeSpinModeUI();
     }
     const lines = parseInt(document.getElementById('lines-input').value);
     const bet = parseInt(document.getElementById('bet-input').value);
@@ -572,7 +620,7 @@ async function handleSpin(isFree = false) {
     const spinBtn = document.getElementById('spin-button');
     const winDisplay = document.getElementById('win-display');
 
-    if (isFree && freeSpinsRemaining > 0) freeSpinsRemaining--;
+    // Free-spin queue is decremented in updateUI after a successful response
 
     // Immediate UI reset and button disable to prevent double-clicks
     spinBtn.disabled = true;

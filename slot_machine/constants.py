@@ -15,9 +15,9 @@ SYMBOLS_AND_COUNT = {
     "♥": 5,
     "♦": 12,
     "♣": 20,
-    WILD_SYMBOL: 5,
+    WILD_SYMBOL: 10,
     SCATTER_SYMBOL: 2,
-    BONUS_SYMBOL: 5
+    BONUS_SYMBOL: 10
 }
 
 WINNING_LINES = {
