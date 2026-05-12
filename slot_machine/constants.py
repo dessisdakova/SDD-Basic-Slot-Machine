@@ -56,13 +56,30 @@ BONUS_MINI_GAME_PRIZES = {
     "200x": 200
 }
 
-# FREE_SPINS_CONFIG = {
-#    3: 5, 4: 7, 5: 9, 6: 11, 7: 13, 8: 15, 9: 17, 10: 19,
-#    11: 21, 12: 23, 13: 25, 14: 30, 15: 50
-# } 
-
-# Testing
 FREE_SPINS_CONFIG = {
-    3: 1, 4: 2, 5: 3, 6: 4, 7: 5, 8: 6, 9: 7, 10: 8,
-    11: 9, 12: 10, 13: 11, 14: 12, 15: 13
-}
+    3: 5, 4: 7, 5: 9, 6: 11, 7: 13, 8: 15, 9: 17, 10: 19,
+    11: 21, 12: 23, 13: 25, 14: 30, 15: 50
+ } 
+
+#  Testing
+# FREE_SPINS_CONFIG = {
+#     3: 1, 4: 2, 5: 3, 6: 4, 7: 5, 8: 6, 9: 7, 10: 8,
+#     11: 9, 12: 10, 13: 11, 14: 12, 15: 13
+# }
+
+# --- Progressive jackpot (Phase 8) ---
+# Contribution: integer dollars per paid spin = (total_bet * percent) // 100;
+# if that rounds down to 0 but total_bet > 0, contribute $1 so small stakes still grow the pool.
+JACKPOT_SEED = 100
+JACKPOT_CONTRIBUTION_PERCENT_OF_TOTAL_BET = 5
+
+# Option A (spec): independent random trial per paid spin after contribution.
+JACKPOT_HIT_PROBABILITY = 0.0005
+
+# Human-readable rules for API/UI (single source for info modal copy).
+JACKPOT_RULES_SUMMARY = (
+    "Paid spins add a share of your total bet to the progressive pool. "
+    "Each paid spin also has a small random chance to win the entire pool; "
+    "after a win the pool resets to its starting value. Free spins do not "
+    "contribute and cannot win the jackpot."
+)

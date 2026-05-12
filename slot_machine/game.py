@@ -1,9 +1,18 @@
+from collections.abc import Callable
+
 from slot_machine.constants import ROWS, REELS
 from slot_machine.core import generate_random_reels_in_spin, convert_reels_to_rows, check_winning_combinations
+from slot_machine.jackpot import process_jackpot_for_spin
 from slot_machine.utils import compare_total_bet_and_balance, print_spin, print_winnings, get_deposit
 
 
-def execute_spin(balance: int, lines: int, bet: int, is_free_spin: bool = False) -> dict:
+def execute_spin(
+    balance: int,
+    lines: int,
+    bet: int,
+    is_free_spin: bool = False,
+    jackpot_random_fn: Callable[[], float] | None = None,
+) -> dict:
     """Logic-only execution of a spin, returning results as a dictionary.
     
     This allows the same logic to be used by both CLI and Web API.
@@ -19,20 +28,35 @@ def execute_spin(balance: int, lines: int, bet: int, is_free_spin: bool = False)
     bonus_triggered, bonus_positions, free_spins_won, wild_positions = \
         check_winning_combinations(transposed_spin, lines, bet)
 
+    # Progressive jackpot (Phase 8): after grid + line/scatter/bonus/free-spin resolution,
+    # paid spins contribute to the pool then one Bernoulli hit trial (see jackpot module).
+    jackpot_pool, jackpot_won, jackpot_win_amount = process_jackpot_for_spin(
+        total_bet, is_free_spin, random_fn=jackpot_random_fn
+    )
+
+    line_scatter_winnings = winnings
+    if is_free_spin:
+        new_balance = balance + line_scatter_winnings + jackpot_win_amount
+    else:
+        new_balance = balance - total_bet + line_scatter_winnings + jackpot_win_amount
+
     return {
         "spin_result": transposed_spin,
-        "winnings": winnings,
+        "winnings": line_scatter_winnings,
         "winning_lines": winning_lines,
         "scatter_winnings": scatter_winnings,
         "scatter_count": scatter_count,
         "scatter_positions": scatter_positions,
         "total_bet": total_bet,
-        "new_balance": balance + winnings if is_free_spin else balance - total_bet + winnings,
+        "new_balance": new_balance,
         "bonus_triggered": bonus_triggered,
         "bonus_positions": bonus_positions,
         "free_spins_won": free_spins_won,
         "wild_positions": wild_positions,
-        "is_free_spin": is_free_spin
+        "is_free_spin": is_free_spin,
+        "jackpot_pool": jackpot_pool,
+        "jackpot_won": jackpot_won,
+        "jackpot_win_amount": jackpot_win_amount,
     }
 
 def spin(balance: int) -> int:
@@ -42,8 +66,11 @@ def spin(balance: int) -> int:
 
     print_spin(result["spin_result"])
     print_winnings(result["winnings"], result["winning_lines"])
+    if result.get("jackpot_won"):
+        print(f"PROGRESSIVE JACKPOT! You won ${result['jackpot_win_amount']}!")
+    print(f"Jackpot pool is now ${result['jackpot_pool']}.")
 
-    return result["winnings"] - result["total_bet"]
+    return result["new_balance"] - balance
 
 def main():
     """Runs the main game loop of the slot machine.
