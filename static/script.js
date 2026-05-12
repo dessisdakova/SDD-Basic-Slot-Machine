@@ -8,9 +8,83 @@ let bonusSymbol = '';
 let scatterSymbol = '';
 let bonusMiniGamePrizes = {};
 let freeSpinsRemaining = 0;
+let freeSpinSessionWinnings = 0;
 let highlightSequenceTimeouts = [];
 let lastSpinWildPositions = [];
 const PAYLINE_HIGHLIGHT_BEFORE_FREE_SPIN_MS = 2000;
+
+/** Keeps the game card layout stable — apply whenever #win-display is cleared or reset */
+const WIN_DISPLAY_SHELL =
+    'text-center mb-4 min-h-[10rem] w-full flex flex-col justify-center items-center gap-2 px-2 shrink-0';
+
+function htmlFreeSpinsAwarded(count) {
+    const phrase = count === 1 ? 'Free spin awarded!' : 'Free spins awarded!';
+    return `<span class="text-xl font-bold text-orange-600 animate-bounce">${count} ${phrase}</span>`;
+}
+
+function refreshBalanceDisplay() {
+    const el = document.getElementById('balance-display');
+    if (!el) return;
+    const frozen = freeSpinsRemaining > 0;
+    const shown = frozen
+        ? Math.max(0, currentBalance - freeSpinSessionWinnings)
+        : currentBalance;
+    el.textContent = `$${shown}`;
+}
+
+function syncFreeSpinModeUI() {
+    const inMode = freeSpinsRemaining > 0;
+    const body = document.getElementById('game-body');
+    if (body) {
+        body.classList.toggle('bg-orange-500', inMode);
+        body.classList.toggle('bg-gray-100', !inMode);
+    }
+
+    const banner = document.getElementById('free-spins-banner');
+    if (banner) {
+        if (inMode) {
+            banner.textContent = `FREE SPINS REMAINING: ${freeSpinsRemaining}`;
+        } else {
+            banner.textContent = '';
+        }
+        banner.classList.toggle('bg-orange-500', inMode);
+        banner.classList.toggle('text-white', inMode);
+        banner.classList.toggle('animate-pulse', inMode);
+        banner.classList.toggle('font-black', inMode);
+        banner.classList.toggle('uppercase', inMode);
+        banner.classList.toggle('tracking-widest', inMode);
+    }
+
+    const balanceRow = document.getElementById('balance-row');
+    const balanceLabel = document.getElementById('balance-label');
+    if (balanceRow) {
+        balanceRow.classList.toggle('opacity-40', inMode);
+        balanceRow.classList.toggle('grayscale', inMode);
+    }
+    if (balanceLabel) {
+        balanceLabel.classList.toggle('text-gray-500', inMode);
+    }
+
+    const fsTotal = document.getElementById('free-spin-winnings-total');
+    const panel = document.getElementById('free-spin-winnings-panel');
+    if (fsTotal) {
+        fsTotal.textContent = `$${freeSpinSessionWinnings}`;
+    }
+    if (panel) {
+        panel.classList.toggle('hidden', !inMode);
+        panel.classList.toggle('ring-2', inMode);
+        panel.classList.toggle('ring-orange-400', inMode);
+    }
+
+    const cashoutBtn = document.getElementById('cashout-button');
+    if (cashoutBtn) {
+        cashoutBtn.disabled = inMode;
+        cashoutBtn.classList.toggle('opacity-50', inMode);
+        cashoutBtn.classList.toggle('cursor-not-allowed', inMode);
+    }
+
+    refreshBalanceDisplay();
+}
 
 function clearHighlightSequenceTimeouts() {
     highlightSequenceTimeouts.forEach((id) => clearTimeout(id));
@@ -167,6 +241,7 @@ async function initGame() {
         // Populate info modal content
         populateInfoModal(config);
         validateInGameInput();
+        syncFreeSpinModeUI();
     } catch (error) {
         console.error('Failed to load configuration', error);
     }
@@ -278,25 +353,21 @@ function toggleInfoModal(show) {
 function updateUI(data) {
     clearHighlightSequenceTimeouts();
     const grid = document.getElementById('slot-grid');
-    const balanceDisplay = document.getElementById('balance-display');
     const messageArea = document.getElementById('message-area');
     const winDisplay = document.getElementById('win-display');
     const indicators = document.querySelectorAll('.line-indicator');
 
+    // Keep full cumulative balance from server for the next spin request body
     currentBalance = data.new_balance;
-    balanceDisplay.textContent = `$${currentBalance}`;
 
     if (data.free_spins_won > 0) {
         freeSpinsRemaining += data.free_spins_won;
     }
-
-    const fsBanner = document.getElementById('free-spins-banner');
-    const fsCount = document.getElementById('free-spins-count');
-    if (freeSpinsRemaining > 0) {
-        fsBanner.classList.remove('hidden');
-        fsCount.textContent = freeSpinsRemaining;
-    } else {
-        fsBanner.classList.add('hidden');
+    if (data.is_free_spin) {
+        freeSpinSessionWinnings += data.winnings;
+    }
+    if (freeSpinsRemaining === 0) {
+        freeSpinSessionWinnings = 0;
     }
 
     indicators.forEach((ind) => ind.classList.remove('active'));
@@ -335,35 +406,33 @@ function updateUI(data) {
         applyFreeSpinWildHighlights(grid, wildPositions);
     }
 
-    const pressSpinHint =
-        freeSpinsRemaining > 0
-            ? `<br><span class="text-sm text-orange-700 font-semibold">Press SPIN when you are ready for your free spin${freeSpinsRemaining > 1 ? 's' : ''}.</span>`
-            : '';
-
     if (data.winnings > 0 || data.free_spins_won > 0) {
-        let winMsg =
-            data.winnings > 0 ? `🎉 You won $${data.winnings}!` : '';
-        if (data.winnings === 0 && data.free_spins_won > 0) {
-            winMsg = '🔄 Free spins awarded!';
-        }
+        const lines = [];
         if (data.bonus_triggered) {
-            winMsg = `🎁 BONUS TRIGGERED! <br>` + winMsg;
+            lines.push(
+                `<span class="text-lg font-bold text-purple-700">🎁 BONUS TRIGGERED!</span>`
+            );
+        }
+        if (data.winnings > 0) {
+            lines.push(
+                `<span class="text-xl font-bold text-green-600 animate-bounce">🎉 You won $${data.winnings}!</span>`
+            );
         }
         if (data.scatter_winnings > 0) {
-            winMsg += `<br><span class="text-sm text-purple-600 font-bold">💎 Scatter Win: ${data.scatter_count} Diamonds won $${data.scatter_winnings}!</span>`;
+            lines.push(
+                `<span class="text-sm text-purple-600 font-bold">💎 Scatter Win: ${data.scatter_count} Diamonds won $${data.scatter_winnings}!</span>`
+            );
         }
         if (data.free_spins_won > 0) {
-            winMsg += `<br><span class="text-sm text-orange-600 font-bold">🔄 ${data.free_spins_won} FREE SPINS AWARDED!</span>`;
+            lines.push(htmlFreeSpinsAwarded(data.free_spins_won));
         }
-        winMsg += pressSpinHint;
+        const winMsg = lines.join('<br>');
         winDisplay.innerHTML = winMsg;
-        winDisplay.className =
-            'text-center font-bold text-green-600 animate-bounce mb-4 min-h-[4rem] flex flex-col justify-center';
+        winDisplay.className = WIN_DISPLAY_SHELL;
         messageArea.innerHTML = '';
     } else {
-        winDisplay.innerHTML = 'Better luck next time!' + pressSpinHint;
-        winDisplay.className =
-            'text-center font-medium text-gray-500 mb-4 min-h-[4rem] flex flex-col justify-center';
+        winDisplay.innerHTML = `<span class="text-lg font-medium text-gray-500">Better luck next time!</span>`;
+        winDisplay.className = WIN_DISPLAY_SHELL;
         messageArea.innerHTML = '';
     }
 
@@ -372,6 +441,8 @@ function updateUI(data) {
             startBonusMiniGame(data.total_bet);
         }, 1500);
     }
+
+    syncFreeSpinModeUI();
 }
 
 function startBonusMiniGame(totalBet) {
@@ -418,9 +489,12 @@ function resolveBonus(element, totalBet) {
     winAnnouncement.innerHTML = `AMAZING!<br>You found a $${winAmount} Prize!`;
     document.getElementById('bonus-game-overlay').appendChild(winAnnouncement);
 
-    // Update local balance
     currentBalance += winAmount;
-    document.getElementById('balance-display').textContent = `$${currentBalance}`;
+    if (freeSpinsRemaining > 0) {
+        freeSpinSessionWinnings += winAmount;
+    }
+
+    syncFreeSpinModeUI();
 
     // Close after delay
     setTimeout(() => {
@@ -434,9 +508,7 @@ function resolveBonus(element, totalBet) {
             clearGridHighlightClasses(grid, indicators);
             applyFreeSpinWildHighlights(grid, lastSpinWildPositions);
         }
-        if (freeSpinsRemaining > 0) {
-            document.getElementById('win-display').innerHTML += `<br><span class="text-sm text-orange-700 font-semibold">Press SPIN when you are ready for your free spin${freeSpinsRemaining > 1 ? 's' : ''}.</span>`;
-        }
+        syncFreeSpinModeUI();
     }, 2500);
 }
 
@@ -446,11 +518,15 @@ function handleDeposit() {
     
     if (amount > 0) {
         currentBalance = amount;
-        document.getElementById('balance-display').textContent = `$${currentBalance}`;
         document.getElementById('deposit-overlay').classList.add('hidden');
         document.getElementById('deposit-overlay').classList.remove('flex');
         document.getElementById('message-area').textContent = "Ready to play!";
-        document.getElementById('win-display').innerHTML = "";
+        const wd = document.getElementById('win-display');
+        wd.innerHTML = "";
+        wd.className = WIN_DISPLAY_SHELL;
+        freeSpinsRemaining = 0;
+        freeSpinSessionWinnings = 0;
+        syncFreeSpinModeUI();
     }
 }
 
@@ -458,7 +534,6 @@ function handleCashout() {
     const messageArea = document.getElementById('message-area');
     const cashoutAmount = currentBalance;
     currentBalance = 0;
-    document.getElementById('balance-display').textContent = `$${currentBalance}`;
     
     // Show cashout modal
     document.getElementById('cashout-amount-display').textContent = `$${cashoutAmount}`;
@@ -466,6 +541,7 @@ function handleCashout() {
     document.getElementById('cashout-overlay').classList.add('flex');
     // Optionally hide the main game content while modal is open
     document.querySelector('.bg-white.p-8').classList.add('hidden');
+    refreshBalanceDisplay();
 }
 
 function handlePlayAgain() {
@@ -475,11 +551,21 @@ function handlePlayAgain() {
     document.getElementById('deposit-overlay').classList.add('flex');
     document.querySelector('.bg-white.p-8').classList.remove('hidden'); // Show game content again
     document.getElementById('message-area').textContent = ""; // Clear previous messages
-    document.getElementById('win-display').innerHTML = "";
+    const wdPlay = document.getElementById('win-display');
+    wdPlay.innerHTML = "";
+    wdPlay.className = WIN_DISPLAY_SHELL;
+    freeSpinsRemaining = 0;
+    freeSpinSessionWinnings = 0;
+    syncFreeSpinModeUI();
 }
 
 async function handleSpin(isFree = false) {
     clearHighlightSequenceTimeouts();
+    if (!isFree) {
+        freeSpinSessionWinnings = 0;
+        const ft = document.getElementById('free-spin-winnings-total');
+        if (ft) ft.textContent = '$0';
+    }
     const lines = parseInt(document.getElementById('lines-input').value);
     const bet = parseInt(document.getElementById('bet-input').value);
     const messageArea = document.getElementById('message-area');
@@ -487,7 +573,6 @@ async function handleSpin(isFree = false) {
     const winDisplay = document.getElementById('win-display');
 
     if (isFree && freeSpinsRemaining > 0) freeSpinsRemaining--;
-    document.getElementById('free-spins-count').textContent = freeSpinsRemaining;
 
     // Immediate UI reset and button disable to prevent double-clicks
     spinBtn.disabled = true;
@@ -495,6 +580,7 @@ async function handleSpin(isFree = false) {
     messageArea.innerHTML = "Spinning...";
     messageArea.className = "mt-6 text-center font-medium text-gray-500";
     winDisplay.innerHTML = "";
+    winDisplay.className = WIN_DISPLAY_SHELL;
 
     const indicators = document.querySelectorAll('.line-indicator');
     indicators.forEach(ind => ind.classList.remove('active'));
@@ -526,12 +612,11 @@ async function handleSpin(isFree = false) {
     } catch (error) {
         messageArea.textContent = '❌ Connection Error';
     } finally {
-        // Re-enable the spin button after a 2-second delay
+        syncFreeSpinModeUI();
         setTimeout(() => {
-            // spinBtn.disabled = false;
-            // spinBtn.style.opacity = "1";
             validateInGameInput();
-        }, 1200); // 1200 milliseconds = 1.2 seconds
+            syncFreeSpinModeUI();
+        }, 1200);
     }
 }
 
