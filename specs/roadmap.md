@@ -16,7 +16,7 @@ This roadmap outlines the evolution of the Slot Machine project, focusing on Spe
     Implement mechanics where symbols trigger payouts or events regardless of their position on paylines.
 *   **Phase 6: Bonus Symbols & Mini-Games[Completed]**  
     Add special symbols that transition the game state into unique bonus rounds or mini-games.
-*   **Phase 7: Free Spins Feature**  
+*   **Phase 7: Free Spins Feature[Completed]**  
     Develop the logic for awarding and executing free spins, including specialized multipliers.
 *   **Phase 8: Progressive Jackpots**  
     Implement a shared pool mechanism that accumulates value and defines specific hit conditions.
