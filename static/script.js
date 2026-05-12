@@ -76,6 +76,7 @@ async function initGame() {
 
         // Populate info modal content
         populateInfoModal(config);
+        validateInGameInput();
     } catch (error) {
         console.error('Failed to load configuration', error);
     }
@@ -455,7 +456,7 @@ document.getElementById('deposit-input').addEventListener('input', (e) => {
     err.classList.toggle('hidden', isValid);
 });
 
-const validateInGameInput = () => {
+function validateInGameInput() {
     const linesInput = document.getElementById('lines-input');
     const betInput = document.getElementById('bet-input');
     const spinBtn = document.getElementById('spin-button');
@@ -474,11 +475,19 @@ const validateInGameInput = () => {
     betInput.classList.toggle('border-red-500', !betValid);
     document.getElementById('bet-error').classList.toggle('hidden', betValid);
     
+    // Update Total Bet Display
+    const totalBetDisplay = document.getElementById('total-bet-display');
+    if (linesValid && betValid) {
+        totalBetDisplay.textContent = linesVal * betVal;
+    } else {
+        totalBetDisplay.textContent = "--";
+    }
+
     // Spin Button state
     const allValid = linesValid && betValid;
     spinBtn.disabled = !allValid;
     spinBtn.style.opacity = allValid ? "1" : "0.5";
-};
+}
 
 document.getElementById('lines-input').addEventListener('input', validateInGameInput);
 document.getElementById('bet-input').addEventListener('input', validateInGameInput);
