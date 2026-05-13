@@ -155,16 +155,16 @@ Optional tuning knobs can be added during implementation (e.g. whether nudge is 
 
 ---
 
-## Decisions log (fill in during implementation)
+## Decisions log
 
-_Record final choices that this spec leaves open._
+_Recorded during implementation._
 
-| Topic | Options | Decision (TBD at implementation) |
-| ----- | -------- | ---------------------------------- |
-| Nudge semantics | A) Shift column + draw one new cell; B) Full column re-roll per nudge | |
-| Free spins | Holds/nudges disabled vs enabled with stricter caps | |
-| Nudge UX | Per-step on server vs client sends full `nudge_sequence` in one POST | |
-| Session id | Required vs optional (optional = hold silently disabled) | |
+| Topic | Options | Decision |
+| ----- | -------- | -------- |
+| Nudge semantics | A) Shift column + draw one new cell; B) Full column re-roll per nudge | **A — shift + fill.** Top ← old middle, middle ← old bottom, bottom ← new symbol drawn from the legal per-reel pool. Implemented in `apply_nudge_to_column` in `slot_machine/reel_actions.py`. |
+| Free spins | Holds/nudges disabled vs enabled with stricter caps | **Disabled on free spins** (both hold and nudge). API returns 422 if hold/nudge fields are sent with `is_free_spin: true`. Keeps Phase 7 mental model intact. |
+| Nudge UX | Per-step on server vs client sends full `nudge_sequence` in one POST | **Client sends full `nudge_sequence` in one POST.** Atomic / idempotent per the spec's "Idempotency" requirement. Players pre-queue up to `MAX_NUDGES_PER_PAID_SPIN` column nudges via the UI before clicking SPIN. |
+| Session id | Required vs optional (optional = hold silently disabled) | **Optional.** If absent the hold request is silently ignored with `hold_rejected_reason: "no_session_id"`. No 4xx error so existing clients without session IDs keep working. |
 
 ---
 
