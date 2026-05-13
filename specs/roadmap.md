@@ -20,7 +20,7 @@ This roadmap outlines the evolution of the Slot Machine project, focusing on Spe
     Develop the logic for awarding and executing free spins, including specialized multipliers.
 *   **Phase 8: Progressive Jackpots [Completed]**  
     Implement a shared pool mechanism that accumulates value and defines specific hit conditions.
-*   **Phase 9: Nudge and Hold Features**  
+*   **Phase 9: Nudge and Hold Features [Completed-Partially]**  
     Add player-initiated reel adjustments to increase interaction and strategic depth.
 
 ## Part II: Persistence & User Experience
