@@ -87,22 +87,17 @@ JACKPOT_RULES_SUMMARY = (
 # --- Hold and Nudge Features (Phase 9) ---
 
 HOLD_FEATURE_ENABLED = True
-NUDGE_FEATURE_ENABLED = True
+# NUDGE_FEATURE_ENABLED = True  # nudge feature hidden — re-enable when UX is redesigned
 
 # Maximum columns that may be held at once; at least one reel must spin freely.
 MAX_HOLD_COLUMNS = 4
 
-# Upper bound on nudge steps per paid spin (0 disables nudging without toggling the feature flag).
-MAX_NUDGES_PER_PAID_SPIN = 3
-
-# "down": top←middle, middle←bottom, bottom←new drawn symbol.
-NUDGE_DIRECTION = "down"
+# MAX_NUDGES_PER_PAID_SPIN = 3  # nudge feature hidden
+# NUDGE_DIRECTION = "down"       # nudge feature hidden
 
 # Human-readable rules for API/UI (no internal RNG details).
 HOLD_AND_NUDGE_RULES_SUMMARY = (
     "Hold: On a paid spin, freeze up to 4 reels to carry their symbols into the next spin. "
     "At least one reel must spin freely. Hold is unavailable on free spins. "
-    "Nudge: Apply up to 3 nudges per paid spin; each nudge shifts a chosen reel down one "
-    "position and draws a fresh symbol at the bottom. Nudges apply before wins are evaluated. "
     "Hold history is stored in memory and resets on server restart."
 )

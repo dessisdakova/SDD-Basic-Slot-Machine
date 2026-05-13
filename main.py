@@ -16,9 +16,9 @@ from slot_machine.constants import (
     MAX_BET,
     MAX_HOLD_COLUMNS,
     MAX_LINES,
-    MAX_NUDGES_PER_PAID_SPIN,
+    # MAX_NUDGES_PER_PAID_SPIN,  # nudge feature hidden
     MIN_BET,
-    NUDGE_FEATURE_ENABLED,
+    # NUDGE_FEATURE_ENABLED,     # nudge feature hidden
     REELS,
     ROWS,
     SCATTER_MULTIPLIERS,
@@ -55,10 +55,10 @@ class SpinRequest(BaseModel):
         default=None,
         description="Zero-based column indices to freeze from the previous spin",
     )
-    nudge_sequence: Optional[list[int]] = Field(
-        default=None,
-        description="Ordered column indices; each entry applies one downward nudge",
-    )
+    # nudge_sequence: Optional[list[int]] = Field(  # nudge feature hidden
+    #     default=None,
+    #     description="Ordered column indices; each entry applies one downward nudge",
+    # )
 
     @field_validator("hold_columns")
     @classmethod
@@ -74,29 +74,15 @@ class SpinRequest(BaseModel):
             raise ValueError("hold_columns: duplicate column indices are not allowed")
         return v
 
-    @field_validator("nudge_sequence")
-    @classmethod
-    def validate_nudge_sequence(cls, v: Optional[list[int]]) -> Optional[list[int]]:
-        if v is None:
-            return v
-        if len(v) > MAX_NUDGES_PER_PAID_SPIN:
-            raise ValueError(
-                f"nudge_sequence: at most {MAX_NUDGES_PER_PAID_SPIN} nudges allowed per spin"
-            )
-        for idx in v:
-            if idx < 0 or idx >= REELS:
-                raise ValueError(
-                    f"nudge_sequence: column index {idx} is out of range (0–{REELS - 1})"
-                )
-        return v
+    # @field_validator("nudge_sequence")          # nudge feature hidden
+    # @classmethod
+    # def validate_nudge_sequence(cls, v):
+    #     ...
 
     @model_validator(mode="after")
-    def hold_and_nudge_require_paid_spin(self) -> "SpinRequest":
-        if self.is_free_spin:
-            if self.hold_columns:
-                raise ValueError("hold_columns is not allowed on free spins")
-            if self.nudge_sequence:
-                raise ValueError("nudge_sequence is not allowed on free spins")
+    def hold_require_paid_spin(self) -> "SpinRequest":
+        if self.is_free_spin and self.hold_columns:
+            raise ValueError("hold_columns is not allowed on free spins")
         return self
 
 
@@ -123,10 +109,10 @@ async def get_configuration():
         # Phase 9: feature flags and config for UI gating
         "features": {
             "hold": HOLD_FEATURE_ENABLED,
-            "nudge": NUDGE_FEATURE_ENABLED,
+            "nudge": False,  # nudge feature hidden
         },
         "max_hold_columns": MAX_HOLD_COLUMNS,
-        "max_nudges_per_paid_spin": MAX_NUDGES_PER_PAID_SPIN,
+        # "max_nudges_per_paid_spin": ...,  # nudge feature hidden
         "hold_and_nudge_rules_summary": HOLD_AND_NUDGE_RULES_SUMMARY,
     }
 
@@ -142,7 +128,7 @@ async def post_spin(request: SpinRequest):
             is_free_spin=request.is_free_spin,
             client_session_id=request.client_session_id,
             hold_columns=request.hold_columns,
-            nudge_sequence=request.nudge_sequence,
+            # nudge_sequence=request.nudge_sequence,  # nudge feature hidden
         )
         return result
     except ValueError as e:

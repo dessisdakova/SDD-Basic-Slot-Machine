@@ -33,15 +33,14 @@ const CLIENT_SESSION_ID = (() => {
 
 /** Feature flags loaded from /game/configuration. */
 let holdFeatureEnabled = false;
-let nudgeFeatureEnabled = false;
+// let nudgeFeatureEnabled = false;  // nudge feature hidden
 let maxHoldColumns = 4;
-let maxNudgesPerPaidSpin = 3;
+// let maxNudgesPerPaidSpin = 3;     // nudge feature hidden
 
 /** Currently toggled hold column indices (set of numbers). */
 const heldColumns = new Set();
 
-/** Ordered list of column indices queued for nudging this spin. */
-let nudgeQueue = [];
+// let nudgeQueue = [];  // nudge feature hidden
 
 /** Keeps the game card layout stable — apply whenever #win-display is cleared or reset */
 const WIN_DISPLAY_SHELL =
@@ -191,25 +190,8 @@ function setupHoldButtons(reels) {
     }
 }
 
-/**
- * Build the per-column Nudge buttons inside #nudge-buttons.
- * Called once after config is loaded.
- */
-function setupNudgeButtons(reels) {
-    const container = document.getElementById('nudge-buttons');
-    if (!container) return;
-    container.innerHTML = '';
-    for (let c = 0; c < reels; c++) {
-        const btn = document.createElement('button');
-        btn.id = `nudge-btn-${c}`;
-        btn.className = 'nudge-btn';
-        btn.textContent = `+${c + 1}`;
-        btn.title = `Queue a nudge for reel ${c + 1}`;
-        btn.setAttribute('aria-label', `Nudge reel ${c + 1}`);
-        btn.addEventListener('click', () => queueNudge(c));
-        container.appendChild(btn);
-    }
-}
+// setupNudgeButtons — nudge feature hidden
+// function setupNudgeButtons(reels) { ... }
 
 /** Toggle a column's hold state. */
 function toggleHoldColumn(colIdx) {
@@ -222,18 +204,9 @@ function toggleHoldColumn(colIdx) {
     syncHoldNudgeUI();
 }
 
-/** Add one nudge step for colIdx to the queue (capped at maxNudgesPerPaidSpin). */
-function queueNudge(colIdx) {
-    if (nudgeQueue.length >= maxNudgesPerPaidSpin) return;
-    nudgeQueue.push(colIdx);
-    syncHoldNudgeUI();
-}
-
-/** Clear the entire nudge queue. */
-function clearNudgeQueue() {
-    nudgeQueue = [];
-    syncHoldNudgeUI();
-}
+// queueNudge / clearNudgeQueue — nudge feature hidden
+// function queueNudge(colIdx) { ... }
+// function clearNudgeQueue() { ... }
 
 /** Clear the hold state (called on free spins and after cashout/new game). */
 function clearHoldState() {
@@ -256,13 +229,9 @@ function syncHoldNudgeUI() {
         holdControls.classList.toggle('flex', showHold);
     }
 
-    // Show/hide nudge control strip
-    const nudgeControls = document.getElementById('nudge-controls');
-    if (nudgeControls) {
-        const showNudge = nudgeFeatureEnabled && !inFreeSpins;
-        nudgeControls.classList.toggle('hidden', !showNudge);
-        nudgeControls.classList.toggle('flex', showNudge);
-    }
+    // Nudge control strip hidden — nudge feature disabled
+    // const nudgeControls = document.getElementById('nudge-controls');
+    // if (nudgeControls) { ... }
 
     // Update each hold button
     for (let c = 0; c < reelsCount; c++) {
@@ -277,27 +246,10 @@ function syncHoldNudgeUI() {
         btn.disabled = inFreeSpins || atCap;
     }
 
-    // Update nudge remaining badge
-    const badge = document.getElementById('nudge-remaining-badge');
-    if (badge) {
-        const remaining = maxNudgesPerPaidSpin - nudgeQueue.length;
-        badge.textContent = `${remaining} left`;
-    }
-
-    // Update each nudge button
-    for (let c = 0; c < reelsCount; c++) {
-        const btn = document.getElementById(`nudge-btn-${c}`);
-        if (!btn) continue;
-        btn.disabled = inFreeSpins || nudgeQueue.length >= maxNudgesPerPaidSpin;
-    }
-
-    // Update queue display
-    const queueEl = document.getElementById('nudge-queue-display');
-    if (queueEl) {
-        queueEl.textContent = nudgeQueue.length
-            ? `Queued: ${nudgeQueue.map(c => `Reel ${c + 1}`).join(' → ')}`
-            : '';
-    }
+    // Nudge button/badge updates hidden — nudge feature disabled
+    // const badge = document.getElementById('nudge-remaining-badge'); ...
+    // nudge-btn-{c} updates ...
+    // nudge-queue-display update ...
 
     // Apply held-column ring overlay on the slot grid cells
     const grid = document.getElementById('slot-grid');
@@ -430,17 +382,17 @@ async function initGame() {
 
         // Phase 9: feature flags
         holdFeatureEnabled = config.features?.hold ?? false;
-        nudgeFeatureEnabled = config.features?.nudge ?? false;
+        // nudgeFeatureEnabled = config.features?.nudge ?? false;  // nudge feature hidden
         maxHoldColumns = config.max_hold_columns ?? 4;
-        maxNudgesPerPaidSpin = config.max_nudges_per_paid_spin ?? 3;
+        // maxNudgesPerPaidSpin = config.max_nudges_per_paid_spin ?? 3;  // nudge feature hidden
 
-        // Build hold/nudge button rows (once per session load)
+        // Build hold button row (once per session load)
         setupHoldButtons(config.reels);
-        setupNudgeButtons(config.reels);
+        // setupNudgeButtons(config.reels);  // nudge feature hidden
 
-        // Wire clear-nudge button
-        const clearBtn = document.getElementById('nudge-clear-btn');
-        if (clearBtn) clearBtn.addEventListener('click', clearNudgeQueue);
+        // nudge-clear-btn wiring hidden
+        // const clearBtn = document.getElementById('nudge-clear-btn');
+        // if (clearBtn) clearBtn.addEventListener('click', clearNudgeQueue);
 
         const jackpotEl = document.getElementById('jackpot-pool-display');
         if (jackpotEl && typeof config.jackpot_pool === 'number') {
@@ -586,20 +538,19 @@ function populateInfoModal(config) {
     // Default preview to Line 1 (using string key)
     updatePaylinePreview("1");
 
-    // Phase 9: Hold & Nudge section in info modal
+    // Phase 9: Hold section in info modal (nudge line hidden)
     const holdNudgeSection = document.getElementById('hold-nudge-modal-section');
     const holdNudgeContent = document.getElementById('hold-nudge-modal-content');
-    const hasHoldOrNudge = config.features?.hold || config.features?.nudge;
-    if (holdNudgeSection && holdNudgeContent && hasHoldOrNudge) {
+    if (holdNudgeSection && holdNudgeContent && config.features?.hold) {
         holdNudgeSection.classList.remove('hidden');
         const rules = config.hold_and_nudge_rules_summary || '';
         holdNudgeContent.innerHTML = `
             <div class="space-y-2">
                 <p class="text-sm text-gray-600">${rules}</p>
                 <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                    ${config.features?.hold ? `<li>🔒 <strong>Hold:</strong> Up to <strong>${config.max_hold_columns}</strong> reels can be frozen per spin.</li>` : ''}
-                    ${config.features?.nudge ? `<li>🔄 <strong>Nudge:</strong> Up to <strong>${config.max_nudges_per_paid_spin}</strong> column nudges per paid spin.</li>` : ''}
-                    <li>⚠️ Both features are unavailable during free spins.</li>
+                    <li>🔒 <strong>Hold:</strong> Up to <strong>${config.max_hold_columns}</strong> reels can be frozen per spin.</li>
+                    <!-- nudge rule hidden: <li>🔄 Nudge: ...</li> -->
+                    <li>⚠️ Hold is unavailable during free spins.</li>
                     <li>ℹ️ Hold history is kept in memory and <strong>resets on server restart</strong>.</li>
                 </ul>
             </div>
@@ -693,9 +644,7 @@ function updateUI(data) {
 
     // Phase 9: apply held-column ring after grid is rebuilt
     applyHoldCellHighlights(grid);
-
-    // Phase 9: clear nudge queue after server processes the spin (regardless of result)
-    nudgeQueue = [];
+    // nudgeQueue = [];  // nudge feature hidden
     syncHoldNudgeUI();
 
     const winningLineNumbers = Object.keys(data.winning_lines);
@@ -852,9 +801,9 @@ function handleDeposit() {
         freeSpinsRemaining = 0;
         freeSpinSessionWinnings = 0;
         clearFreeSpinSessionEndSchedule();
-        // Phase 9: reset hold/nudge state on new game
+        // Phase 9: reset hold state on new game
         heldColumns.clear();
-        nudgeQueue = [];
+        // nudgeQueue = [];  // nudge feature hidden
         syncFreeSpinModeUI();
         syncHoldNudgeUI();
     }
@@ -886,9 +835,9 @@ function handlePlayAgain() {
     freeSpinsRemaining = 0;
     freeSpinSessionWinnings = 0;
     clearFreeSpinSessionEndSchedule();
-    // Phase 9: reset hold/nudge state
+    // Phase 9: reset hold state
     heldColumns.clear();
-    nudgeQueue = [];
+    // nudgeQueue = [];  // nudge feature hidden
     syncFreeSpinModeUI();
     syncHoldNudgeUI();
 }
@@ -927,9 +876,10 @@ async function handleSpin(isFree = false) {
         if (holdFeatureEnabled && heldColumns.size > 0) {
             spinPayload.hold_columns = Array.from(heldColumns).sort((a, b) => a - b);
         }
-        if (nudgeFeatureEnabled && nudgeQueue.length > 0) {
-            spinPayload.nudge_sequence = [...nudgeQueue];
-        }
+        // nudge_sequence hidden — nudge feature disabled
+        // if (nudgeFeatureEnabled && nudgeQueue.length > 0) {
+        //     spinPayload.nudge_sequence = [...nudgeQueue];
+        // }
     }
 
     try {

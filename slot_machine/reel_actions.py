@@ -120,51 +120,32 @@ def apply_hold_to_grid(
     return new_reels
 
 
-def apply_nudge_to_column(
-    column: list[str],
-    reel_idx: int,
-    rows: int = ROWS,
-    reels: int = REELS,
-    random_fn: Callable[[list[str]], str] | None = None,
-) -> list[str]:
-    """Apply one downward nudge to a single reel column.
-
-    Shift semantics (NUDGE_DIRECTION = "down"):
-        position 0 (top)    ← old position 1 (middle)
-        position 1 (middle) ← old position 2 (bottom)
-        position 2 (bottom) ← one new symbol drawn from the legal pool
-
-    The new bottom symbol obeys per-reel constraints:
-        - BONUS_SYMBOL excluded on the first and last reel.
-        - If *column* already contains SCATTER_SYMBOL or BONUS_SYMBOL, that
-          symbol is excluded from the draw (once-per-reel constraint applied to
-          the existing visible symbols).
-
-    :param column: Current symbols in this reel, top-to-bottom (length == rows).
-    :param reel_idx: Zero-based column index.
-    :param rows: Expected column length.
-    :param reels: Total reels (to identify first/last).
-    :param random_fn: Optional ``(pool: list[str]) -> str`` callable for tests.
-    :return: New column after the downward nudge (length == rows).
-    """
-    choice = random_fn if random_fn is not None else _random.choice
-
-    # Build draw pool for the new bottom symbol.
-    pool = _get_symbol_pool()
-
-    # Once-per-reel: exclude special symbols already visible in the column.
-    for special in (SCATTER_SYMBOL, BONUS_SYMBOL):
-        if special in column:
-            pool = [s for s in pool if s != special]
-
-    # First / last reel: bonus symbol forbidden.
-    if reel_idx == 0 or reel_idx == reels - 1:
-        pool = [s for s in pool if s != BONUS_SYMBOL]
-
-    if not pool:  # safety fallback
-        pool = _get_symbol_pool()
-
-    new_symbol = choice(pool)
-
-    # Downward shift: [old[1], old[2], ..., new_symbol]
-    return list(column[1:rows]) + [new_symbol]
+# ---------------------------------------------------------------------------
+# Nudge feature hidden — re-enable when UX flow is redesigned
+# (classic pub-machine feel requires a two-step API: spin → see result → nudge)
+# ---------------------------------------------------------------------------
+# def apply_nudge_to_column(
+#     column: list[str],
+#     reel_idx: int,
+#     rows: int = ROWS,
+#     reels: int = REELS,
+#     random_fn: Callable[[list[str]], str] | None = None,
+# ) -> list[str]:
+#     """Apply one downward nudge to a single reel column.
+#
+#     Shift semantics (NUDGE_DIRECTION = "down"):
+#         position 0 (top)    ← old position 1 (middle)
+#         position 1 (middle) ← old position 2 (bottom)
+#         position 2 (bottom) ← one new symbol drawn from the legal pool
+#     """
+#     choice = random_fn if random_fn is not None else _random.choice
+#     pool = _get_symbol_pool()
+#     for special in (SCATTER_SYMBOL, BONUS_SYMBOL):
+#         if special in column:
+#             pool = [s for s in pool if s != special]
+#     if reel_idx == 0 or reel_idx == reels - 1:
+#         pool = [s for s in pool if s != BONUS_SYMBOL]
+#     if not pool:
+#         pool = _get_symbol_pool()
+#     new_symbol = choice(pool)
+#     return list(column[1:rows]) + [new_symbol]

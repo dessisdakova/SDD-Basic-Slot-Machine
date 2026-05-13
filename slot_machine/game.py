@@ -3,8 +3,8 @@ from collections.abc import Callable
 from slot_machine.constants import (
     HOLD_FEATURE_ENABLED,
     MAX_HOLD_COLUMNS,
-    MAX_NUDGES_PER_PAID_SPIN,
-    NUDGE_FEATURE_ENABLED,
+    # MAX_NUDGES_PER_PAID_SPIN,  # nudge feature hidden
+    # NUDGE_FEATURE_ENABLED,     # nudge feature hidden
     REELS,
     ROWS,
 )
@@ -14,7 +14,7 @@ from slot_machine.core import (
     generate_random_reels_in_spin,
 )
 from slot_machine.jackpot import process_jackpot_for_spin
-from slot_machine.reel_actions import apply_hold_to_grid, apply_nudge_to_column
+from slot_machine.reel_actions import apply_hold_to_grid  # apply_nudge_to_column hidden
 from slot_machine.session_grid import get_last_reels, set_last_reels
 from slot_machine.utils import compare_total_bet_and_balance, get_deposit, print_spin, print_winnings
 
@@ -27,7 +27,7 @@ def execute_spin(
     jackpot_random_fn: Callable[[], float] | None = None,
     client_session_id: str | None = None,
     hold_columns: list[int] | None = None,
-    nudge_sequence: list[int] | None = None,
+    # nudge_sequence: list[int] | None = None,  # nudge feature hidden
 ) -> dict:
     """Logic-only execution of a spin, returning results as a dictionary.
 
@@ -38,7 +38,7 @@ def execute_spin(
           prior grid exists for client_session_id: merge held columns from the
           stored grid with freshly generated columns.
         - Otherwise: full random grid (Phase 1–8 behaviour unchanged).
-    (c) Apply nudges in sequence order (NUDGE_FEATURE_ENABLED, paid spins only).
+    (c) [Nudge hidden — re-enable when two-step API flow is implemented]
     (d) Transpose reels → rows.
     (e) check_winning_combinations → jackpot → balance update (Phase 8 unchanged).
     (f) Persist the new reel grid to the session store (if session ID provided).
@@ -48,8 +48,6 @@ def execute_spin(
     :param hold_columns: Zero-based column indices to copy from the previous grid.
         Ignored (with a reason code) when the feature is disabled, this is a
         free spin, there is no prior grid, or the list is invalid.
-    :param nudge_sequence: Ordered list of column indices; each entry applies one
-        downward nudge to that column before win evaluation.
     """
     total_bet = lines * bet
     if not is_free_spin and total_bet > balance:
@@ -84,13 +82,13 @@ def execute_spin(
         spin_reels = generate_random_reels_in_spin(ROWS, REELS)
 
     # ------------------------------------------------------------------
-    # (c) Apply nudges (paid spins only, feature must be enabled)
+    # (c) Nudge hidden — re-enable when two-step API flow is implemented
     # ------------------------------------------------------------------
-    nudges_applied: list[int] = []
-    if nudge_sequence and NUDGE_FEATURE_ENABLED and not is_free_spin:
-        for col_idx in nudge_sequence:
-            spin_reels[col_idx] = apply_nudge_to_column(spin_reels[col_idx], col_idx)
-            nudges_applied.append(col_idx)
+    # nudges_applied: list[int] = []
+    # if nudge_sequence and NUDGE_FEATURE_ENABLED and not is_free_spin:
+    #     for col_idx in nudge_sequence:
+    #         spin_reels[col_idx] = apply_nudge_to_column(spin_reels[col_idx], col_idx)
+    #         nudges_applied.append(col_idx)
 
     # ------------------------------------------------------------------
     # (d) Transpose → (e) evaluate
@@ -139,7 +137,7 @@ def execute_spin(
         "jackpot_win_amount": jackpot_win_amount,
         # Phase 9 observability fields
         "hold_columns_applied": hold_columns_applied,
-        "nudges_applied": nudges_applied,
+        "nudges_applied": [],  # nudge feature hidden
         "hold_rejected_reason": hold_rejected_reason,
     }
 

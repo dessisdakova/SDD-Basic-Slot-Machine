@@ -10,7 +10,7 @@ from slot_machine.constants import (
 )
 from slot_machine.reel_actions import (
     apply_hold_to_grid,
-    apply_nudge_to_column,
+    # apply_nudge_to_column,  # nudge feature hidden
     generate_single_reel_column,
 )
 
@@ -163,69 +163,17 @@ class TestApplyHoldToGrid:
 # apply_nudge_to_column
 # ---------------------------------------------------------------------------
 
-class TestApplyNudgeToColumn:
-    def test_downward_shift_of_symbols(self):
-        """Top ← middle, middle ← bottom; bottom is new."""
-        column = ["♠", "♥", "♦"]
-        result = apply_nudge_to_column(column, reel_idx=2, random_fn=lambda pool: "♣")
-        assert result[0] == "♥"   # old middle
-        assert result[1] == "♦"   # old bottom
-        assert result[2] == "♣"   # new symbol
-
-    def test_returns_correct_length(self):
-        col = ["♠", "♥", "♦"]
-        result = apply_nudge_to_column(col, reel_idx=2)
-        assert len(result) == ROWS
-
-    def test_original_column_not_mutated(self):
-        col = ["♠", "♥", "♦"]
-        original = list(col)
-        apply_nudge_to_column(col, reel_idx=2)
-        assert col == original
-
-    def test_bonus_excluded_on_first_reel(self):
-        col = ["♠", "♥", "♦"]
-        for _ in range(200):
-            result = apply_nudge_to_column(col, reel_idx=0)
-            assert result[2] != BONUS_SYMBOL
-
-    def test_bonus_excluded_on_last_reel(self):
-        col = ["♠", "♥", "♦"]
-        for _ in range(200):
-            result = apply_nudge_to_column(col, reel_idx=REELS - 1)
-            assert result[2] != BONUS_SYMBOL
-
-    def test_scatter_excluded_when_already_present_in_column(self):
-        """If scatter is already visible, the new symbol must not be scatter."""
-        col = [SCATTER_SYMBOL, "♥", "♦"]
-        for _ in range(200):
-            result = apply_nudge_to_column(col, reel_idx=2)
-            assert result[2] != SCATTER_SYMBOL
-
-    def test_bonus_excluded_when_already_present_in_column(self):
-        """If bonus is already visible on an inner reel, the new symbol must not be bonus."""
-        col = [BONUS_SYMBOL, "♥", "♦"]
-        for _ in range(200):
-            result = apply_nudge_to_column(col, reel_idx=2)
-            assert result[2] != BONUS_SYMBOL
-
-    def test_new_symbol_is_valid(self):
-        col = ["♠", "♥", "♦"]
-        for _ in range(50):
-            result = apply_nudge_to_column(col, reel_idx=2)
-            assert result[2] in ALL_SYMBOLS
-
-    def test_multiple_nudges_chain_correctly(self):
-        """Applying three nudges in sequence should shift the column three times."""
-        col = ["♠", "♥", "♦"]
-        fixed_new = "♣"
-        # After nudge 1: ["♥", "♦", "♣"]
-        col = apply_nudge_to_column(col, reel_idx=2, random_fn=lambda p: fixed_new)
-        assert col[0] == "♥"
-        assert col[1] == "♦"
-        assert col[2] == fixed_new
-        # After nudge 2: ["♦", "♣", "♣"]
-        col = apply_nudge_to_column(col, reel_idx=2, random_fn=lambda p: fixed_new)
-        assert col[0] == "♦"
-        assert col[1] == fixed_new
-        assert col[2] == fixed_new
+# ---------------------------------------------------------------------------
+# TestApplyNudgeToColumn — nudge feature hidden
+# Re-enable when apply_nudge_to_column is restored in reel_actions.py
+# ---------------------------------------------------------------------------
+# class TestApplyNudgeToColumn:
+#     def test_downward_shift_of_symbols(self): ...
+#     def test_returns_correct_length(self): ...
+#     def test_original_column_not_mutated(self): ...
+#     def test_bonus_excluded_on_first_reel(self): ...
+#     def test_bonus_excluded_on_last_reel(self): ...
+#     def test_scatter_excluded_when_already_present_in_column(self): ...
+#     def test_bonus_excluded_when_already_present_in_column(self): ...
+#     def test_new_symbol_is_valid(self): ...
+#     def test_multiple_nudges_chain_correctly(self): ...

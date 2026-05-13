@@ -4,10 +4,10 @@ from main import app
 from slot_machine.constants import (
     HOLD_FEATURE_ENABLED,
     MAX_LINES,
-    MAX_NUDGES_PER_PAID_SPIN,
+    # MAX_NUDGES_PER_PAID_SPIN,  # nudge feature hidden
     MIN_BET,
     MAX_BET,
-    NUDGE_FEATURE_ENABLED,
+    # NUDGE_FEATURE_ENABLED,     # nudge feature hidden
     REELS,
     ROWS,
     SYMBOLS_AND_COUNT,
@@ -52,13 +52,13 @@ def test_configuration_returns_correct_structure_and_values():
 
 
 def test_configuration_includes_phase9_feature_flags():
-    """Phase 9: configuration must expose hold/nudge feature flags."""
+    """Phase 9: configuration must expose hold feature flag (nudge hidden)."""
     data = game_api.get_configuration().json()
     assert "features" in data
     assert data["features"]["hold"] == HOLD_FEATURE_ENABLED
-    assert data["features"]["nudge"] == NUDGE_FEATURE_ENABLED
+    assert data["features"]["nudge"] is False  # nudge feature hidden
     assert "max_hold_columns" in data
-    assert "max_nudges_per_paid_spin" in data
+    # assert "max_nudges_per_paid_spin" in data  # nudge feature hidden
     assert "hold_and_nudge_rules_summary" in data
 
 
@@ -160,65 +160,27 @@ def test_hold_applied_on_second_spin():
 
 
 # ---------------------------------------------------------------------------
-# Nudge — request validation (422)
+# Nudge tests hidden — re-enable when nudge feature is restored
 # ---------------------------------------------------------------------------
-
-def test_nudge_invalid_column_index_returns_422():
-    response = game_api.spin(balance=1000, lines=3, bet=5, nudge_sequence=[REELS])
-    assert response.status_code == 422
-
-
-def test_nudge_exceeds_max_returns_422():
-    too_many = list(range(MAX_NUDGES_PER_PAID_SPIN + 1))
-    response = game_api.spin(balance=1000, lines=3, bet=5, nudge_sequence=too_many)
-    assert response.status_code == 422
-
-
-def test_nudge_on_free_spin_returns_422():
-    response = game_api.spin(
-        balance=1000, lines=3, bet=5, is_free_spin=True, nudge_sequence=[0]
-    )
-    assert response.status_code == 422
+# def test_nudge_invalid_column_index_returns_422(): ...
+# def test_nudge_exceeds_max_returns_422(): ...
+# def test_nudge_on_free_spin_returns_422(): ...
+# def test_nudge_applied_appears_in_response(): ...
+# def test_nudge_sequence_multiple_columns_appears_in_response(): ...
+# def test_nudge_same_column_twice(): ...
 
 
 # ---------------------------------------------------------------------------
-# Nudge — business logic
+# Grid dimensions remain valid under hold
 # ---------------------------------------------------------------------------
 
-def test_nudge_applied_appears_in_response():
-    data = game_api.spin(balance=1000, lines=3, bet=5, nudge_sequence=[0]).json()
-    assert data["nudges_applied"] == [0]
-
-
-def test_nudge_sequence_multiple_columns_appears_in_response():
-    data = game_api.spin(
-        balance=1000, lines=3, bet=5,
-        nudge_sequence=[0, 2, 4],
-    ).json()
-    assert data["nudges_applied"] == [0, 2, 4]
-
-
-def test_nudge_same_column_twice():
-    """Same column nudged twice — both entries appear in nudges_applied."""
-    data = game_api.spin(
-        balance=1000, lines=3, bet=5,
-        nudge_sequence=[1, 1],
-    ).json()
-    assert data["nudges_applied"] == [1, 1]
-
-
-# ---------------------------------------------------------------------------
-# Grid dimensions remain valid under hold/nudge
-# ---------------------------------------------------------------------------
-
-def test_grid_dimensions_valid_after_hold_and_nudge():
+def test_grid_dimensions_valid_after_hold():
     session = "dim-check"
     game_api.spin(balance=1000, lines=3, bet=5, client_session_id=session)
     data = game_api.spin(
         balance=1000, lines=3, bet=5,
         client_session_id=session,
         hold_columns=[1, 3],
-        nudge_sequence=[0, 2],
     ).json()
     grid = data["spin_result"]
     assert len(grid) == ROWS
