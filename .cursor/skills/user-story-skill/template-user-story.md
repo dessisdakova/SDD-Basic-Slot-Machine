@@ -36,6 +36,12 @@ Spec and application code only (no tests). Paths relative to the repository root
 - `specs/...`
 - `slot_machine/...` (or other non-test source paths)
 
+## Test case references
+
+Optional. Populated when functional Markdown test cases are created from this story (see `.cursor/skills/test-cases-skill/`). Paths relative to the repository root.
+
+- `test_cases/<epic_folder>/<case_title_snake_case>.md`
+
 ## Missing requirements
 
 Only add this section when applicable. Use both subheadings below; leave a subheading out (or write “None.”) if it does not apply.
