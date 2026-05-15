@@ -10,7 +10,7 @@ Create **one epic folder per major feature area** named in **snake_case** from t
 
 **Out of scope** for dedicated sections or fields: non-functional requirements as a separate backlog discipline, priority, Definition of Ready / Done, and sizing. Mentioning those topics in passing inside narrative, AC, or Technical Notes is allowed when it helps clarity.
 
-**Do not** use `tests/` or test files as sources for deriving stories; stories come first in your workflow, and you will create E2E tests from them later.
+**Do not** use `tests/` or test files as sources for deriving stories; stories come first in your workflow, followed by functional Markdown test cases (see `.cursor/skills/test-cases-skill/`) and optional Playwright automation.
 
 ## Instructions
 
@@ -25,6 +25,7 @@ Create **one epic folder per major feature area** named in **snake_case** from t
 9. **References**: list only **spec** and **application code** files that substantiate the story. **Do not** list test files or `tests/`. Use paths **relative to the repository root** (for example `specs/phase_1_web_interface.md`, `slot_machine/game.py`), not machine-absolute paths.
 10. **Missing requirements**: use the template section with **both** subheadings—gaps versus the phase specification and implementation-quality gaps—when applicable.
 11. **Spec and code disagreement**: when the phase spec and the implementation do not match, document it in the template section. Prefer stating **what the spec calls for** and **what the code does** in plain language so the reader can decide next steps.
+12. **Test case references**: when functional test case Markdown files are added or updated for this story (typically under `test_cases/<epic_folder>/` by the test-cases skill), add or refresh the **Test case references** section in this story file with one bullet per case, path relative to the repository root. Remove bullets for deleted cases.
 
 ## Practices
 
