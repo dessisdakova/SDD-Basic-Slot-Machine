@@ -16,13 +16,14 @@ How to use **test-cases-jira-skill** with **Atlassian MCP Server** in Cursor. Th
    - `testCaseIssueTypeId` — from Jira project issue types (for field metadata calls)
 
 2. In Cursor: Set up **Atlassian MCP Server** and sign in to your site by following the [Official Documentation](https://support.atlassian.com/atlassian-rovo-mcp-server/docs/setting-up-ides/).
+
 ⚠️ **Subscription Disclaimer**
 
 *Important:* This integration requires Atlassian Rovo. By connecting your site, you may be automatically enrolled in a 30-day free trial. You must manually cancel this trial before it ends to avoid being charged a recurring monthly fee. Please check your Atlassian billing settings immediately after connection to confirm your trial status.
 
 3. In Jira, put **acceptance criteria** in the **Story** description.
 
-4. Confirm you can create **Test Case** issues manually in your project.
+4. Confirm you can create **Test Case** issues manually in your project.git status
 
 Auth stays in Cursor MCP—no API token in the repo.
 
