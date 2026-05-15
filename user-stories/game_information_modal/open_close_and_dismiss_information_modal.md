@@ -8,9 +8,9 @@ As a player, I want a clear way to open and close the rules and payouts panel wi
 
 ### UI (or equivalent)
 
-1. From the main slot screen, the player can open the information experience with a dedicated control (for example the circular “info” control in the header).
+1. From the main slot screen, the player can open the information experience with a dedicated control: an info icon on the top right of the slot modal.
 2. When open, the information layer appears above the game (overlay), shows a readable panel titled for rules and payouts, and blocks accidental interaction with the main game until dismissed.
-3. The player can close the layer using an explicit close control on the panel (for example the top-right dismiss control).
+3. The player can close the layer using an explicit close control on the panel - an X icon.
 4. Clicking the dimmed backdrop **outside** the panel content closes the layer the same way as an explicit close, so the player is not trapped.
 5. After closing, the main game is fully visible and interactive again with no leftover modal-only styling on the main layout.
 
@@ -24,16 +24,8 @@ As a player, I want a clear way to open and close the rules and payouts panel wi
 - `static/index.html`
 - `static/script.js`
 
-## Missing requirements
+## Test case references
 
-### Gaps versus specification
-
-- There is no dedicated `specs/phase_3_*.md` file; Phase 3 is described only as a short milestone in `specs/roadmap.md`. Detailed accessibility (focus trap, `aria-modal`, initial focus) is not specified there.
-
-### Implementation quality
-
-- None identified for basic open, close, and backdrop-dismiss behavior.
-
-## Spec and code disagreement
-
-- None for the behaviors listed above; the roadmap does not prescribe exact control placement beyond “UI component,” which the header info button satisfies.
+- `test_cases/game_information_modal/information_modal_opens_from_icon_and_shows_overlay_panel.md`
+- `test_cases/game_information_modal/information_modal_closes_with_panel_close_control.md`
+- `test_cases/game_information_modal/information_modal_closes_when_clicking_outside_panel.md`

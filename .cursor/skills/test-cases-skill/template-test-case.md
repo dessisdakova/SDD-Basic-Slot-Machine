@@ -18,14 +18,26 @@ Bullets only. Use only when something differs from the default: browser open, lo
 
 ## Steps
 
-Numbered list only. Plain language; one main action per step where possible.
+Numbered list. Each item is **one short action** (imperative: “Click …”, “Enter …”, “Send GET …”).
 
-1. ...
-2. ...
+When something must be checked **right after** that action, add **indented sub-bullets** under that step. Start each sub-bullet with **Verify** or **Confirm** and state the observable check in one short line.
+
+1. Click on the **info** control.
+    - Verify the modal is opened.
+2. Click once on the **outside** backdrop area.
+    - Verify the info layer is closed.
+3. ...
+
+Do not write long narrative paragraphs in Steps. Do not repeat the full end-state here if it belongs in **Expected result**—use sub-bullets only for checks tied to the step just above.
 
 ## Expected result
 
-Plain language for QA. For UI criteria: describe what the player sees or can do. For Backend/API criteria in the story: include HTTP status and JSON fields or response rules; the API is the source of truth.
+Final outcome only—what must be true when the case is done. Use **short declarative sentences**, **one per line** (not a single paragraph). Bold key UI labels or values only when it helps readability.
+
+The info layer is closed.
+The **main game** is **fully visible and interactive** again.
+
+For Backend/API criteria: one line per fact (for example status code, then one line per JSON field or rule).
 
 ## Notes
 
