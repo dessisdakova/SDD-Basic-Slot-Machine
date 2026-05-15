@@ -1,0 +1,26 @@
+{
+  "cloudId": "YOUR_CLOUD_ID",
+  "siteUrl": "https://YOUR_SITE.atlassian.net",
+  "projectKey": "PROJ",
+  "storyIssueTypeName": "Story",
+  "testCaseIssueTypeName": "Test Case",
+  "testCaseIssueTypeId": "YOUR_TEST_CASE_ISSUE_TYPE_ID",
+  "issueLinkType": "Relates",
+  "issueLinkDirection": {
+    "inwardIssue": "storyKey",
+    "outwardIssue": "testCaseKey",
+    "note": "Creates: story relates to test case (adjust if your link type is directional)."
+  },
+  "fields": {
+    "title": "summary",
+    "stepsAndExpected": "description",
+    "note": "If you add Steps/Expected custom fields, set their customfield IDs here and update SKILL.md."
+  },
+  "labels": {
+    "smoke": "smoke",
+    "regression": "regression",
+    "generated": "generated-by-agent"
+  },
+  "contentFormat": "markdown",
+  "duplicateCheckJql": "project = {projectKey} AND issuetype = \"Test Case\" AND issue in linkedIssues({storyKey}) AND summary ~ \"{summaryFragment}\""
+}
