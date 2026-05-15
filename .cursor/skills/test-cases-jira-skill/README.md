@@ -16,6 +16,9 @@ How to use **test-cases-jira-skill** with **Atlassian MCP Server** in Cursor. Th
    - `testCaseIssueTypeId` — from Jira project issue types (for field metadata calls)
 
 2. In Cursor: Set up **Atlassian MCP Server** and sign in to your site by following the [Official Documentation](https://support.atlassian.com/atlassian-rovo-mcp-server/docs/setting-up-ides/).
+⚠️ **Subscription Disclaimer**
+
+*Important:* This integration requires Atlassian Rovo. By connecting your site, you may be automatically enrolled in a 30-day free trial. You must manually cancel this trial before it ends to avoid being charged a recurring monthly fee. Please check your Atlassian billing settings immediately after connection to confirm your trial status.
 
 3. In Jira, put **acceptance criteria** in the **Story** description.
 
@@ -59,3 +62,18 @@ Open the **Story** → **Linked issues** (or your configured link type, e.g. **R
 - Custom fields **Steps** / **Expected result** → add `customfield_…` IDs to `jira-config.local.json`
 - **Tests** link type in Jira admin
 - **Parent** hierarchy for Test Cases under stories
+
+## 7. Example
+
+**Story:**
+![Story](./story-sample.png)
+**Linked test cases:**
+![Story](./linked-cases.png)
+**Test case:**
+![Story](./generated-test-case-1.png)
+**Test case:**
+![Story](./generated-test-case-2.png)
+**Test case:**
+![Story](./generated-test-case-3.png)
+**Test case:**
+![Story](./generated-test-case-4.png)
