@@ -1,3 +1,6 @@
+# Local Jira settings (site URL, cloud ID, project key) — copy from jira-config.example.json
+.cursor/skills/test-cases-jira-skill/jira-config.local.json
+
 __pycache__
 *.py[cod]
 .venv
