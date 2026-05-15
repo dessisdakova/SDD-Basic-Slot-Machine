@@ -67,7 +67,7 @@ Add (names indicative—align with actual code):
 | `JACKPOT_HIT_PROBABILITY` | Option A: Bernoulli trial per paid spin after contribution (`random() < probability`). |
 | `JACKPOT_RULES_SUMMARY` | Copy for API + info modal (no internal probability value). |
 
-All tunables should live in **one place** for SDD review and future Phase 12 externalization.
+All tunables should live in **one place** for SDD review and future Phase 14 externalization.
 
 ---
 

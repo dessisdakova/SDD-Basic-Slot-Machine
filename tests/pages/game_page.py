@@ -28,6 +28,9 @@ class SlotMachinePage:
         self.lines_input.fill(str(lines))
         self.bet_input.fill(str(bet))
         self.spin_button.click()
+        self.page.locator('#slot-grid[data-reels-idle="true"]').wait_for(
+            state='visible', timeout=15000
+        )
 
     def get_balance(self) -> int:
         text = self.balance_display.inner_text()
