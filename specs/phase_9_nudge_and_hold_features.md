@@ -81,7 +81,7 @@ The API today is **stateless** except the process-local jackpot pool. Hold **req
 
 **Limits:** Server restart clears sessions (same class of limitation as the jackpot pool). Document in the info modal.
 
-**Future (Phase 10+):** Replace in-memory map with persisted sessions if multi-tab or long-lived play matters.
+**Future (Phase 11+):** Replace in-memory map with persisted sessions if multi-tab or long-lived play matters.
 
 ---
 

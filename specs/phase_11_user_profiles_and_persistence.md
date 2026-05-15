@@ -1,10 +1,10 @@
-# Specification: Phase 10 — User Profiles & Persistence
+# Specification: Phase 11 — User Profiles & Persistence
 
 ## Goal & Scope
 
 Replace the current **stateless, client-trusted** architecture with a **persistent, server-authoritative** one: player identities, balances, and spin history survive server restarts and are scoped to authenticated accounts rather than browser sessions.
 
-Today the client sends its own `balance` on every `POST /game/spin`, meaning any player can forge an arbitrary balance. The jackpot pool and hold-session grids (Phase 8 & 9) live in process memory and are lost on restart. Phase 10 fixes all three by introducing a **lightweight database layer** and **token-based authentication**.
+Today the client sends its own `balance` on every `POST /game/spin`, meaning any player can forge an arbitrary balance. The jackpot pool and hold-session grids (Phase 8 & 9) live in process memory and are lost on restart. Phase 11 fixes all three by introducing a **lightweight database layer** and **token-based authentication**.
 
 **In scope (target delivery)**
 
@@ -20,7 +20,7 @@ Today the client sends its own `balance` on every `POST /game/spin`, meaning any
 
 - Password reset / email verification.
 - Multi-device / concurrent-session conflict resolution.
-- Full audit log with replay (may follow in Phase 15–16).
+- Full audit log with replay (may follow in Phase 16–17).
 - Role-based access control (admin vs. player).
 
 ---
@@ -42,7 +42,7 @@ The client no longer sends `balance`. On `POST /game/spin` the server looks up t
 
 Each spin appended to a `spins` table:  
 `(id, user_id, timestamp, lines, bet, total_bet, winnings, new_balance, jackpot_won, is_free_spin)`.  
-No full grid storage required at this phase (full replay is Phase 15+).
+No full grid storage required at this phase (full replay is Phase 16+).
 
 ---
 
@@ -190,7 +190,7 @@ _Record final choices that this spec leaves open._
 
 ## References
 
-- `specs/roadmap.md` — Part II, Phase 10: User Profiles & Persistence.
+- `specs/roadmap.md` — Part II, Phase 11: User Profiles & Persistence.
 - `specs/phase_9_nudge_and_hold_features.md` — session store and `client_session_id` to be replaced.
 - Spin pipeline: `slot_machine/game.py`, `slot_machine/jackpot.py`, `slot_machine/session_grid.py`, `main.py`.
-- Prior trust-model note: Phase 9 spec §"Session & trust model", paragraph "Future (Phase 10+)".
+- Prior trust-model note: Phase 9 spec §"Session & trust model", paragraph "Future (Phase 11+)".

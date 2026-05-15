@@ -1,6 +1,7 @@
 let currentBalance = 0;
 let winningLinesMap = {};
 let reelsCount = 3; // Fallback value
+let rowsCount = 3;
 let maxLines = 10;
 let maxBet = 10;
 let multipliersConfig = {};
@@ -243,7 +244,8 @@ function syncHoldNudgeUI() {
         btn.textContent = isHeld ? '🔒 Held' : 'Hold';
         // Disable: free spins, or at cap and this column isn't already held
         const atCap = heldColumns.size >= maxHoldColumns && !isHeld;
-        btn.disabled = inFreeSpins || atCap;
+        const reelsBusy = !isReelsIdle();
+        btn.disabled = inFreeSpins || atCap || reelsBusy;
     }
 
     // Nudge button/badge updates hidden — nudge feature disabled
@@ -251,30 +253,42 @@ function syncHoldNudgeUI() {
     // nudge-btn-{c} updates ...
     // nudge-queue-display update ...
 
-    // Apply held-column ring overlay on the slot grid cells
-    const grid = document.getElementById('slot-grid');
-    if (grid && grid.children.length > 0) {
-        const rows = grid.children.length / reelsCount;
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < reelsCount; c++) {
-                const cell = grid.children[r * reelsCount + c];
-                if (cell) cell.classList.toggle('held-cell', heldColumns.has(c));
-            }
-        }
-    }
+    applyHoldCellHighlights();
 }
 
 /**
  * Apply held-column ring styling after the grid is rebuilt (called from updateUI).
  */
-function applyHoldCellHighlights(grid) {
-    const rows = grid.children.length / reelsCount;
-    for (let r = 0; r < rows; r++) {
+function applyHoldCellHighlights() {
+    for (let r = 0; r < rowsCount; r++) {
         for (let c = 0; c < reelsCount; c++) {
-            const cell = grid.children[r * reelsCount + c];
-            if (cell) cell.classList.toggle('held-cell', heldColumns.has(c));
+            const slot = getSlotHighlight(r, c);
+            if (slot) slot.classList.toggle('held-cell', heldColumns.has(c));
         }
     }
+}
+
+function getSlotCell(row, col) {
+    if (window.SlotReels && typeof window.SlotReels.getCell === 'function') {
+        return window.SlotReels.getCell(row, col);
+    }
+    const grid = document.getElementById('slot-grid');
+    if (!grid) return null;
+    const idx = row * reelsCount + col;
+    return grid.children[idx] || null;
+}
+
+/** Win/hold frame overlay — flush with the reel window rows. */
+function getSlotHighlight(row, col) {
+    if (window.SlotReels && typeof window.SlotReels.getHighlightSlot === 'function') {
+        return window.SlotReels.getHighlightSlot(row, col);
+    }
+    return getSlotCell(row, col);
+}
+
+function isReelsIdle() {
+    const grid = document.getElementById('slot-grid');
+    return !grid || grid.dataset.reelsIdle !== 'false';
 }
 
 function clearHighlightSequenceTimeouts() {
@@ -296,8 +310,6 @@ function applyPhaseOneWinHighlights(grid, data) {
         return;
     }
 
-    Array.from(grid.children).forEach((cell) => cell.classList.add('dimmed-cell'));
-
     if (hasPaylineWins) {
         Object.entries(data.winning_lines).forEach(([lineNum, count]) => {
             const indicator = document.getElementById(`line-ind-${lineNum}`);
@@ -305,10 +317,9 @@ function applyPhaseOneWinHighlights(grid, data) {
 
             const coordinates = winningLinesMap[lineNum];
             coordinates.forEach(([row, col], index) => {
-                const gridIndex = row * reelsCount + col;
                 if (index < count) {
-                    grid.children[gridIndex].classList.remove('dimmed-cell');
-                    grid.children[gridIndex].classList.add('winning-cell');
+                    const slot = getSlotHighlight(row, col);
+                    if (slot) slot.classList.add('winning-cell');
                 }
             });
         });
@@ -316,50 +327,41 @@ function applyPhaseOneWinHighlights(grid, data) {
 
     if (hasScatterWins) {
         data.scatter_positions.forEach(([row, col]) => {
-            const gridIndex = row * reelsCount + col;
-            const cell = grid.children[gridIndex];
-            if (cell) {
-                cell.classList.remove('dimmed-cell');
-                cell.classList.add('scatter-win');
-            }
+            const slot = getSlotHighlight(row, col);
+            if (slot) slot.classList.add('scatter-win');
         });
     }
 
     if (data.bonus_triggered) {
         data.bonus_positions.forEach(([row, col]) => {
-            const gridIndex = row * reelsCount + col;
-            const cell = grid.children[gridIndex];
-            if (cell) {
-                cell.classList.remove('dimmed-cell');
-                cell.classList.add('bonus-win', 'animate-pulse');
-            }
+            const slot = getSlotHighlight(row, col);
+            if (slot) slot.classList.add('bonus-win');
         });
     }
 }
 
-function clearGridHighlightClasses(grid, indicators) {
+function clearGridHighlightClasses(_grid, indicators) {
     indicators.forEach((ind) => ind.classList.remove('active'));
-    Array.from(grid.children).forEach((cell) => {
-        cell.classList.remove(
-            'dimmed-cell',
-            'winning-cell',
-            'scatter-win',
-            'bonus-win',
-            'free-spin-trigger',
-            'animate-pulse'
-        );
-    });
+    for (let r = 0; r < rowsCount; r++) {
+        for (let c = 0; c < reelsCount; c++) {
+            const cell = getSlotCell(r, c);
+            const slot = getSlotHighlight(r, c);
+            if (cell) cell.classList.remove('dimmed-cell');
+            if (!slot) continue;
+            slot.classList.remove(
+                'winning-cell',
+                'scatter-win',
+                'bonus-win',
+                'free-spin-trigger'
+            );
+        }
+    }
 }
 
-function applyFreeSpinWildHighlights(grid, wildPositions) {
-    Array.from(grid.children).forEach((cell) => cell.classList.add('dimmed-cell'));
+function applyFreeSpinWildHighlights(_grid, wildPositions) {
     wildPositions.forEach(([row, col]) => {
-        const gridIndex = row * reelsCount + col;
-        const cell = grid.children[gridIndex];
-        if (cell) {
-            cell.classList.remove('dimmed-cell');
-            cell.classList.add('free-spin-trigger');
-        }
+        const slot = getSlotHighlight(row, col);
+        if (slot) slot.classList.add('free-spin-trigger');
     });
 }
 
@@ -371,6 +373,7 @@ async function initGame() {
         // SET GLOBALS IMMEDIATELY to avoid race conditions
         winningLinesMap = config.winning_lines_config;
         reelsCount = config.reels;
+        rowsCount = config.rows;
         scatterSymbol = config.scatter_symbol;
         bonusSymbol = config.bonus_symbol;
         maxLines = config.max_lines;
@@ -440,13 +443,17 @@ async function initGame() {
             }
         }
 
-        initialGrid.flat().forEach(symbol => {
-            const cell = document.createElement('div');
-            cell.className = 'slot-cell';
-            cell.textContent = symbol;
-            cell.setAttribute('data-symbol', symbol); // Set data-symbol for reliable comparison
-            grid.appendChild(cell);
-        });
+        if (window.SlotReels) {
+            window.SlotReels.mountGrid(grid, initialGrid, config.symbols);
+        } else {
+            initialGrid.flat().forEach((symbol) => {
+                const cell = document.createElement('div');
+                cell.className = 'slot-cell';
+                cell.textContent = symbol;
+                cell.setAttribute('data-symbol', symbol);
+                grid.appendChild(cell);
+            });
+        }
 
         // Populate info modal content
         populateInfoModal(config);
@@ -593,14 +600,13 @@ function toggleInfoModal(show) {
     modal.classList.toggle('flex', show);
 }
 
-function updateUI(data) {
+function applyPostSpinUI(data) {
     clearHighlightSequenceTimeouts();
     const grid = document.getElementById('slot-grid');
     const messageArea = document.getElementById('message-area');
     const winDisplay = document.getElementById('win-display');
     const indicators = document.querySelectorAll('.line-indicator');
 
-    // Keep full cumulative balance from server for the next spin request body
     currentBalance = data.new_balance;
 
     const jackpotPoolEl = document.getElementById('jackpot-pool-display');
@@ -632,19 +638,7 @@ function updateUI(data) {
 
     indicators.forEach((ind) => ind.classList.remove('active'));
 
-    grid.innerHTML = '';
-    data.spin_result.forEach((row) => {
-        row.forEach((symbol) => {
-            const cell = document.createElement('div');
-            cell.className = 'slot-cell';
-            cell.textContent = symbol;
-            grid.appendChild(cell);
-        });
-    });
-
-    // Phase 9: apply held-column ring after grid is rebuilt
-    applyHoldCellHighlights(grid);
-    // nudgeQueue = [];  // nudge feature hidden
+    applyHoldCellHighlights();
     syncHoldNudgeUI();
 
     const winningLineNumbers = Object.keys(data.winning_lines);
@@ -857,47 +851,52 @@ async function handleSpin(isFree = false) {
     const spinBtn = document.getElementById('spin-button');
     const winDisplay = document.getElementById('win-display');
 
-    // Free-spin queue is decremented in updateUI after a successful response
-
-    // Immediate UI reset and button disable to prevent double-clicks
     spinBtn.disabled = true;
-    spinBtn.style.opacity = "0.5";
+    spinBtn.style.opacity = '0.5';
     setMessageArea(messageArea, 'Spinning...', 'muted');
-    winDisplay.innerHTML = "";
+    winDisplay.innerHTML = '';
     winDisplay.className = WIN_DISPLAY_SHELL;
 
     const indicators = document.querySelectorAll('.line-indicator');
-    indicators.forEach(ind => ind.classList.remove('active'));
+    clearGridHighlightClasses(null, indicators);
 
-    // Phase 9: build hold/nudge payload (only on paid spins)
+    const heldSnapshot = new Set(heldColumns);
+    if (window.SlotReels) {
+        window.SlotReels.startSpin({ heldColumns: heldSnapshot });
+    }
+    syncHoldNudgeUI();
+
     const spinPayload = { balance: currentBalance, lines, bet, is_free_spin: isFree };
     spinPayload.client_session_id = CLIENT_SESSION_ID;
-    if (!isFree) {
-        if (holdFeatureEnabled && heldColumns.size > 0) {
-            spinPayload.hold_columns = Array.from(heldColumns).sort((a, b) => a - b);
-        }
-        // nudge_sequence hidden — nudge feature disabled
-        // if (nudgeFeatureEnabled && nudgeQueue.length > 0) {
-        //     spinPayload.nudge_sequence = [...nudgeQueue];
-        // }
+    if (!isFree && holdFeatureEnabled && heldColumns.size > 0) {
+        spinPayload.hold_columns = Array.from(heldColumns).sort((a, b) => a - b);
     }
 
     try {
         const response = await fetch('/game/spin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(spinPayload)
+            body: JSON.stringify(spinPayload),
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            updateUI(data);
+            if (window.SlotReels) {
+                await window.SlotReels.landAndReveal(data.spin_result, {
+                    heldColumns: heldSnapshot,
+                    lastReelExtra: true,
+                });
+            }
+            applyPostSpinUI(data);
         } else {
-            let errorMessage = "";
+            if (window.SlotReels) {
+                window.SlotReels.cancelSpin();
+            }
+            let errorMessage = '';
             if (Array.isArray(data.detail)) {
-                errorMessage = "❌ Validation Errors:<br>";
-                data.detail.forEach(error => {
+                errorMessage = '❌ Validation Errors:<br>';
+                data.detail.forEach((error) => {
                     errorMessage += `- ${error.msg} (Field: ${error.loc.join('.')})<br>`;
                 });
             } else {
@@ -906,15 +905,14 @@ async function handleSpin(isFree = false) {
             setMessageArea(messageArea, errorMessage, 'error');
         }
     } catch (error) {
+        if (window.SlotReels) {
+            window.SlotReels.cancelSpin();
+        }
         setMessageArea(messageArea, '❌ Connection Error', 'error');
     } finally {
         syncFreeSpinModeUI();
         syncHoldNudgeUI();
-        setTimeout(() => {
-            validateInGameInput();
-            syncFreeSpinModeUI();
-            syncHoldNudgeUI();
-        }, 1200);
+        validateInGameInput();
     }
 }
 
@@ -975,8 +973,9 @@ function validateInGameInput() {
 
     // Spin Button state
     const allValid = linesValid && betValid;
-    spinBtn.disabled = !allValid;
-    spinBtn.style.opacity = allValid ? "1" : "0.5";
+    const reelsBusy = !isReelsIdle();
+    spinBtn.disabled = !allValid || reelsBusy;
+    spinBtn.style.opacity = allValid && !reelsBusy ? '1' : '0.5';
 }
 
 document.getElementById('lines-input').addEventListener('input', validateInGameInput);
